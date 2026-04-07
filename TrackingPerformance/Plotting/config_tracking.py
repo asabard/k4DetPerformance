@@ -33,11 +33,14 @@ NEVTS_PER_JOB = "2000"
 PARTICLE_LIST = ["mu"]  # Peut être étendu: ["mu", "e", "pi"]
 
 # Angles theta disponibles (en degrés)
-# Note: 89° n'est pas inclus par défaut car souvent problématique
-THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80"]
+# Note: 89° n'est pas inclus par défaut car pb de simulation dans thetanotfixed ca devient 90°
+THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "90"]
+#THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "89"]
+
 
 # Impulsions disponibles (en GeV)
-MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
+#MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
+MOMENTUM_LIST = ["1", "10", "100"]
 
 # ============================================================================
 # LISTES POUR LES PLOTS SUPERPOSÉS
@@ -47,7 +50,7 @@ MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
 STACK_MOMENTUM_LIST = ["1", "10", "100"]
 
 # Angles pour les plots en fonction de l'impulsion
-STACK_THETA_LIST = ["10", "30", "50", "70"]
+STACK_THETA_LIST = ["10", "30", "50", "70", "90"]
 
 # ============================================================================
 # CHEMINS D'ENTRÉE/SORTIE

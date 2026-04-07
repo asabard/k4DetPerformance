@@ -42,10 +42,10 @@ if not CONFIG_LOADED:
     NEVTS = "2000"
     
     PARTICLE_LIST = ["mu"]
-    THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80"]
+    THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "89", "90"]
     MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
     STACK_MOMENTUM_LIST = ["1", "10", "100"]
-    STACK_THETA_LIST = ["10", "30", "50", "70"]
+    STACK_THETA_LIST = ["10", "30", "50", "70", "90"]
     
     RESIDUAL_LIST = ["d0", "z0", "phi0", "omega", "tanLambda", "phi", "theta"]
     SPECIAL_LIST = ["pt", "p"]
@@ -317,7 +317,7 @@ c_p.Print(f"{fname}[")
 
 legend = {}
 for v in VAR_LIST:
-    legend[v] = ROOT.TLegend(0.62, 0.62, 0.82, 0.82)
+    legend[v] = ROOT.TLegend(0.62, 0.55, 0.82, 0.82)
     legend[v].SetBorderSize(0)
     legend[v].SetFillStyle(0)
     legend[v].SetTextFont(62)

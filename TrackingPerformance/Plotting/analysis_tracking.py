@@ -32,7 +32,7 @@ except ImportError:
     NEVTS_PER_JOB = "2000"
     
     PARTICLE_LIST = ["mu"]
-    THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80"]
+    THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "90"]
     MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
     
     RESIDUAL_LIST = ["d0", "z0", "phi0", "omega", "tanLambda", "phi", "theta"]
@@ -43,7 +43,7 @@ except ImportError:
 # ============================================================================
 
 # Sous-dossier optionnel pour theta (ex: "ThetaNotFixed" ou "")
-THETA_FOLDER = ""
+THETA_FOLDER = "ThetaNotFixed"  # Peut être ajusté selon la structure des répertoires
 
 # Construction des chemins
 if CONFIG_LOADED:

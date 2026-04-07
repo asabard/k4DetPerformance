@@ -91,6 +91,7 @@ def marker_styles_func(file_identifier, graph_type, canvas_style):
             '50': {'a': [ROOT.kOpenDiamond], 'b': [ROOT.kFullDiamond], 'color': ROOT.kMagenta},
             '70': {'a': [ROOT.kOpenCross], 'b': [ROOT.kFullCross], 'color': ROOT.kGreen},
             '89': {'a': [ROOT.kOpenCircle], 'b': [ROOT.kFullCircle], 'color': ROOT.kBlack},
+            '90': {'a': [ROOT.kOpenStar], 'b': [ROOT.kFullStar], 'color': ROOT.kOrange},
         }
     else:
         raise ValueError(f"Invalid canvas style: {canvas_style}")
@@ -126,6 +127,8 @@ def extract_file_identifier(file_name, canvas_style):
             return '70'
         elif '89.root' in file_name:
             return '89'
+        elif '90.root' in file_name:
+            return '90'
         else:
             raise ValueError(f"Unable to extract file identifier from {file_name}")
     else:
@@ -681,7 +684,8 @@ if __name__ == "__main__":
     folder_a = "/eos/user/a/asabard/DigiPerformance/ANALYSIS/detailed/mu/plots/"
     folder_b = "/eos/user/a/asabard/DigiPerformance/ANALYSIS/parametric/mu/plots/"
     
-    legend_txt = [", detailed digi", ", param. (3 #mum)"]
+    # Pas oublier de changer la resolution au cas de changement de dossier B (paramétrique)
+    legend_txt = [", detailed digi", ", param. (res 3 #mum)"]
     top_left_txt = "FCC-ee CLD"
     
     canvas_names = [
@@ -709,7 +713,8 @@ if __name__ == "__main__":
     print("\n[INFO] Création des plots de ratio vs momentum...")
     
     output_file_path = './ratio_momentum.root'
-    file_names = ['p_dist_10.root', 'p_dist_30.root', 'p_dist_50.root', 'p_dist_70.root']
+    file_names = ['p_dist_10.root', 'p_dist_30.root', 'p_dist_50.root', 'p_dist_70.root','p_dist_90.root']
+    # 'p_dist_90.root'
     
     process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b, 
                                file_names, 'momentum', legend_txt, top_left_txt)

@@ -58,7 +58,7 @@ def set_y_axis_title(canvas_name):
         "Canvas_delta_z0": "#sigma(#Deltaz_{0}) [#mum]",
         "Canvas_delta_phi0": "#Delta#phi_{0}",
         "Canvas_delta_omega": "#Delta#Omega",
-        "Canvas_delta_tanLambda": "#tan#Lambda",
+        "Canvas_delta_tanLambda": "tan#Lambda",
         "Canvas_delta_phi": "#sigma(#Delta#phi) [mrad]",
         "Canvas_delta_theta": "#sigma(#Delta#theta) [mrad]",
         "Canvas_sdelta_pt": "#sigma(#Deltap_{T}/p_{T,true}^{2}) [GeV^{-1}]",
@@ -218,7 +218,7 @@ def combine_canvases(input_files, output_file, marker_styles_func, legend_text,
         # =====================================================================
         # LÉGENDE - en haut à droite, DANS le canvas (x2 <= 0.94)
         # =====================================================================
-        output_legend = ROOT.TLegend(0.52, 0.68, 0.94, 0.91)
+        output_legend = ROOT.TLegend(0.52, 0.60, 0.94, 0.91)
         output_legend.SetTextFont(42)
         output_legend.SetTextSize(0.028)
         output_legend.SetFillStyle(0)
