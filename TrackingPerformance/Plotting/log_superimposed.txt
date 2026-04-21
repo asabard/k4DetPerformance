@@ -1,0 +1,150 @@
+Info in <TCanvas::Print>: pdf file ./ratio_theta_CLD_o2_v07.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: pdf file ./ratio_theta_CLD_o2_v07.pdf has been closed
+Info in <TCanvas::Print>: pdf file ./ratio_momentum_CLD_o2_v07.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_momentum_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: pdf file ./ratio_momentum_CLD_o2_v07.pdf has been closed
+Info in <TCanvas::Print>: pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf
+Info in <TCanvas::Print>: pdf file ./ratio_theta_ptconst_CLD_o2_v07.pdf has been closed
+
+======================================================================
+SuperimposedCanvas Ratio — FCC-ee CLD_o2_v07
+======================================================================
+
+[INFO] Ratio vs theta...
+[INFO] 3/3 paires trouvées
+[INFO] Sauvegardé: ./ratio_theta_CLD_o2_v07.root
+
+[INFO] Ratio vs momentum...
+[INFO] 5/5 paires trouvées
+[INFO] Sauvegardé: ./ratio_momentum_CLD_o2_v07.root
+
+[INFO] Ratio vs theta à pT constant...
+[INFO] 3/3 paires trouvées
+[INFO] Sauvegardé: ./ratio_theta_ptconst_CLD_o2_v07.root
+
+[INFO] Terminé !

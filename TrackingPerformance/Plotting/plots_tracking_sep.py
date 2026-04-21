@@ -1,23 +1,34 @@
 """
 Plots tracking (version séparée) pour FCC-ee.
-Génère des plots séparés pour chaque angle/momentum au lieu de les combiner.
+
+CHANGEMENTS vs version précédente :
+- Boucle sur toutes les particules de PARTICLE_LIST (plus que mu)
+- Crystal Ball étendue : électrons ET pions sur variables d'impulsion
+- Fix initialisation CB : σ_init = h.GetRMS() (pas |mean|)
+- Ajout de SetParLimits pour stabiliser le fit
+- Nouvelle métrique σ_eff 68% (model-free) en parallèle du fit
+- Stockage de tail_ratio = σ_eff / σ_fit pour diagnostiquer les queues
+- Export d'un fichier JSON récapitulatif par particule pour compare_particles.py
 
 Usage:
     DIGI_MODE=detailed python plots_tracking_sep.py
     DIGI_MODE=parametric python plots_tracking_sep.py
+    DETECTOR_MODEL=CLD_o2_v05 python plots_tracking_sep.py
 """
 import ROOT
 import numpy as np
 import os
 import sys
+import json
+import math as _math
 
 # ============================================================================
-# IMPORT DE LA CONFIGURATION
+# IMPORT CONFIG
 # ============================================================================
 
 try:
     from config_tracking import (
-        DIGI_MODE, NEVTS,
+        DIGI_MODE, NEVTS, DETECTOR_MODEL, EOSBASE,
         PARTICLE_LIST, THETA_LIST, MOMENTUM_LIST,
         STACK_MOMENTUM_LIST, STACK_THETA_LIST,
         get_analysis_output_dir, get_plots_output_dir,
@@ -25,355 +36,396 @@ try:
         VAR_LIST, RESIDUAL_LIST, SPECIAL_LIST, AXIS_TITLES, UNIT_SCALE,
         MARKER_STYLES, COLORS, CANVAS_WIDTH, CANVAS_HEIGHT,
         PLOT_MARGIN_LEFT, PLOT_MARGIN_BOTTOM,
-        file_exists
+        file_exists,
+        X_AXIS_MODE, get_x_value, get_x_label,
+        should_use_crystalball,
+        SIGMA_EFF_FRACTION, TAIL_WARNING_THRESHOLD,
     )
     CONFIG_LOADED = True
     print("[INFO] Configuration chargée depuis config_tracking.py")
+    print(f"[INFO] DETECTOR_MODEL = {DETECTOR_MODEL}")
+    print(f"[INFO] PARTICLE_LIST  = {PARTICLE_LIST}")
 except ImportError:
-    print("[WARNING] config_tracking.py non trouvé, utilisation de la config locale")
-    CONFIG_LOADED = False
+    print("[ERROR] config_tracking.py introuvable — ce script ne peut pas tourner sans")
+    sys.exit(1)
 
 # ============================================================================
-# CONFIGURATION LOCALE (fallback)
-# ============================================================================
-
-if not CONFIG_LOADED:
-    DIGI_MODE = os.environ.get("DIGI_MODE", "detailed")
-    NEVTS = "2000"
-    
-    PARTICLE_LIST = ["mu"]
-    THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "89", "90"]
-    MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
-    STACK_MOMENTUM_LIST = ["1", "10", "100"]
-    STACK_THETA_LIST = ["10", "30", "50", "70", "90"]
-    
-    RESIDUAL_LIST = ["d0", "z0", "phi0", "omega", "tanLambda", "phi", "theta"]
-    SPECIAL_LIST = ["pt", "p"]
-    VAR_LIST = [f"delta_{v}" for v in RESIDUAL_LIST] + [f"sdelta_{v}" for v in SPECIAL_LIST]
-    
-    AXIS_TITLES = {
-        "delta_d0": "#sigma(#Deltad_{0}) [#mum]",
-        "delta_z0": "#sigma(#Deltaz_{0}) [#mum]",
-        "delta_phi0": "#Delta#phi_{0}",
-        "delta_omega": "#Delta#Omega",
-        "delta_tanLambda": "tan #Lambda",
-        "delta_phi": "#sigma(#Delta#phi) [mrad]",
-        "delta_theta": "#sigma(#Delta#theta) [mrad]",
-        "sdelta_pt": "#sigma(#Deltap_{T}/p_{T,true}^{2}) [GeV^{-1}]",
-        "sdelta_p": "#sigma(#Deltap/p_{true}^{2}) [GeV^{-1}]",
-    }
-    
-    UNIT_SCALE = {
-        "delta_d0": 1e3, "delta_z0": 1e3, "delta_phi0": 1.0, "delta_omega": 1.0,
-        "delta_tanLambda": 1.0, "delta_phi": 1e3, "delta_theta": 1e3,
-        "sdelta_pt": 1.0, "sdelta_p": 1.0,
-    }
-    
-    MARKER_STYLES = [ROOT.kOpenTriangleUp, ROOT.kOpenSquare, ROOT.kOpenDiamond, 
-                     ROOT.kOpenCross, ROOT.kOpenCircle]
-    COLORS = [ROOT.kBlue, ROOT.kRed, ROOT.kMagenta, ROOT.kGreen, ROOT.kBlack]
-    CANVAS_WIDTH, CANVAS_HEIGHT = 900, 800
-    PLOT_MARGIN_LEFT, PLOT_MARGIN_BOTTOM = 0.15, 0.15
-    
-    def pname(particle, theta, momentum):
-        return f"{particle}_{theta}deg_{momentum}GeV_{NEVTS}evts"
-    
-    def get_analysis_output_dir(particle="mu"):
-        return f"/eos/user/a/asabard/DigiPerformance/ANALYSIS/{DIGI_MODE}/{particle}/"
-    
-    def get_plots_output_dir(particle="mu"):
-        return f"/eos/user/a/asabard/DigiPerformance/ANALYSIS/{DIGI_MODE}/{particle}/plots/"
-    
-    def ensure_dir(directory):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    
-    def file_exists(path):
-        return os.path.isfile(path)
-
-# ============================================================================
-# CONFIGURATION ROOT
+# SETUP ROOT
 # ============================================================================
 
 ROOT.gStyle.SetOptFit(1111)
 ROOT.gROOT.SetBatch(True)
 
-# Dimensions pour le plot
 plot_width = 0.09
 plot_height = 0.09
 
 # ============================================================================
-# CHEMINS
+# σ_eff : demi-largeur du plus petit intervalle contenant 68.27% des données
 # ============================================================================
 
-inputDir = get_analysis_output_dir("mu")
-outputDir = get_plots_output_dir("mu")
-ensure_dir(outputDir)
+def sigma_eff_68(data, fraction=None):
+    """
+    Sigma effectif model-free.
+    
+    Retourne (sigma, err). err est approximé par σ/√(2n) (valable pour une
+    distribution à peu près normale ; pour les queues fortes il faudrait
+    un bootstrap mais c'est un ordre de grandeur raisonnable).
+    """
+    if fraction is None:
+        fraction = SIGMA_EFF_FRACTION
+    
+    data = np.sort(np.asarray(data, dtype=float))
+    n = len(data)
+    if n < 20:
+        return 0.0, 0.0
+    
+    nk = int(round(fraction * n))
+    if nk < 1 or nk >= n:
+        return 0.0, 0.0
+    
+    widths = data[nk:] - data[:n - nk]
+    sigma = float(np.min(widths)) / 2.0
+    err = sigma / _math.sqrt(2.0 * n)
+    return sigma, err
 
-print(f"\n[INFO] Input:  {inputDir}")
-print(f"[INFO] Output: {outputDir}\n")
-
-# ============================================================================
-# FONCTIONS UTILITAIRES
-# ============================================================================
 
 def filter_data_std(data, threshold=2.5, n_selections=3):
-    """Filtre itératif des données à ±threshold*sigma."""
-    filtered_data = data
+    """Filtre itératif à ±threshold*sigma."""
+    filtered_data = list(data)
     for _ in range(n_selections):
         if len(filtered_data) < 3:
             break
-        mean = np.mean(filtered_data)
-        std = np.std(filtered_data)
-        if std == 0:
+        m = np.mean(filtered_data)
+        s = np.std(filtered_data)
+        if s == 0:
             break
-        filtered_data = [d for d in filtered_data if abs(d - mean) < threshold * std]
+        filtered_data = [d for d in filtered_data if abs(d - m) < threshold * s]
     return filtered_data
 
 
-def check_process_files():
-    """Vérifie quels fichiers de processus existent."""
+# ============================================================================
+# CHEMINS — on boucle sur les particules, donc plus de inputDir global
+# ============================================================================
+
+def get_input_output_dirs(particle):
+    """Retourne (inputDir, outputDir) pour une particule."""
+    in_dir = get_analysis_output_dir(particle)
+    out_dir = get_plots_output_dir(particle)
+    ensure_dir(out_dir)
+    return in_dir, out_dir
+
+
+# ============================================================================
+# VÉRIFICATION DES FICHIERS
+# ============================================================================
+
+def check_process_files(particle, input_dir):
+    """Vérifie quels fichiers existent pour une particule donnée."""
     available = {}
     missing = []
     
-    for particle in PARTICLE_LIST:
-        for theta in THETA_LIST:
-            for momentum in MOMENTUM_LIST:
-                proc_name = pname(particle, theta, momentum)
-                file_path = os.path.join(inputDir, f"{proc_name}.root")
-                
-                if file_exists(file_path):
-                    available[proc_name] = file_path
-                else:
-                    missing.append((particle, theta, momentum))
+    for theta in THETA_LIST:
+        for momentum in MOMENTUM_LIST:
+            proc_name = pname(particle, theta, momentum)
+            file_path = os.path.join(input_dir, f"{proc_name}.root")
+            if file_exists(file_path):
+                available[proc_name] = file_path
+            else:
+                missing.append((particle, theta, momentum))
     
     if missing:
-        print(f"[WARNING] {len(missing)} fichiers manquants sur {len(missing) + len(available)}:")
-        for p, t, m in missing[:5]:
-            print(f"  - {pname(p, t, m)}")
-        if len(missing) > 5:
-            print(f"  ... et {len(missing) - 5} autres")
-        print()
+        print(f"  [{particle}] {len(missing)} manquants / "
+              f"{len(missing) + len(available)} total")
     
     return available
 
 
 # ============================================================================
-# CHARGEMENT DES DONNÉES
+# FIT D'UN HISTOGRAMME (gauss ou Crystal Ball selon contexte)
 # ============================================================================
 
-print("[INFO] Vérification des fichiers d'entrée...")
-available_processes = check_process_files()
-
-if not available_processes:
-    print("[ERROR] Aucun fichier d'entrée trouvé!")
-    sys.exit(1)
-
-processList = {p: {} for p in available_processes}
-print(f"[INFO] {len(processList)} fichiers à traiter\n")
-
-# Chargement des DataFrames
-print("[INFO] Chargement des RDataFrames...")
-df = {}
-var_col_rp = {}
-
-for p, fpath in available_processes.items():
-    try:
-        df[p] = ROOT.RDataFrame("events", fpath)
-        
-        for v in SPECIAL_LIST:
-            df[p] = df[p].Define(f"sdelta_{v}", f"delta_{v} / (true_{v} * true_{v})")
-        
-        var_col_rp[p] = {}
-        for v in VAR_LIST:
-            var_col_rp[p][v] = df[p].Take["double"](v)
-            
-    except Exception as e:
-        print(f"[WARNING] Erreur lors du chargement de {p}: {e}")
-        if p in df:
-            del df[p]
-
-processList = {p: {} for p in df.keys()}
-print(f"[INFO] {len(processList)} fichiers chargés avec succès\n")
-
-# ============================================================================
-# FILTRAGE ET CRÉATION DES HISTOGRAMMES
-# ============================================================================
-
-print("[INFO] Création des histogrammes...")
-var_col = {}
-var_low = {}
-var_high = {}
-h = {}
-
-for p in processList:
-    var_col[p] = {}
-    var_low[p] = {}
-    var_high[p] = {}
-    h[p] = {}
+def fit_histogram(h, particle, variable, var_low, var_high):
+    """
+    Fitte un histogramme avec la fonction appropriée.
     
-    for v in VAR_LIST:
+    Returns:
+        dict avec keys: sigma, sigma_err, mean, mean_err, fit_type, fit_quality
+    """
+    use_cb = should_use_crystalball(particle, variable)
+    fit_type = "CB" if use_cb else "gauss"
+    
+    try:
+        if use_cb:
+            f = ROOT.TF1(
+                f"f_{particle}_{variable}_{id(h)}",
+                "ROOT::Math::crystalball_function(x, [0], [1], [2], [3])*[4]",
+                var_low, var_high
+            )
+            # Init CORRIGÉE : σ = RMS (pas |mean|), α=1.5, n=2.0
+            rms = h.GetRMS()
+            if rms <= 0:
+                rms = (var_high - var_low) / 10.0
+            f.SetParameters(
+                1.5,              # [0] alpha (transition seuil)
+                2.0,              # [1] n (exposant queue)
+                rms,              # [2] sigma (cœur gaussien)
+                0.0,              # [3] mu (centre)
+                h.GetMaximum(),   # [4] norm
+            )
+            # Contraintes pour éviter divergence
+            f.SetParLimits(0, 0.1, 10.0)           # alpha > 0
+            f.SetParLimits(1, 1.01, 30.0)          # n > 1 (normalisable)
+            f.SetParLimits(2, 1e-6 * rms, 100 * rms)  # sigma borné
+            f.SetParLimits(3, var_low, var_high)   # mu dans la plage
+        else:
+            f = ROOT.TF1(f"f_{particle}_{variable}_{id(h)}", "gaus", var_low, var_high)
+        
+        # "RQ" = range restreint, quiet. "S" ajouté pour avoir le résultat
+        fit_result = h.Fit(f, "RQS")
+        
+        sigma_val = f.GetParameter(2)
+        sigma_err = f.GetParError(2)
+        mean_val = f.GetParameter(1) if not use_cb else f.GetParameter(3)
+        mean_err = f.GetParError(1) if not use_cb else f.GetParError(3)
+        
+        # Qualité du fit
+        fit_quality = "OK"
+        if fit_result and fit_result.Get():
+            if fit_result.Status() != 0:
+                fit_quality = f"STATUS={fit_result.Status()}"
+        
+        return {
+            "sigma": sigma_val,
+            "sigma_err": sigma_err,
+            "mean": mean_val,
+            "mean_err": mean_err,
+            "fit_type": fit_type,
+            "fit_quality": fit_quality,
+            "fit_obj": f,  # pour pouvoir dessiner
+        }
+    except Exception as e:
+        print(f"    [WARNING] Fit failed for {particle}/{variable}: {e}")
+        return {
+            "sigma": 0.0, "sigma_err": 0.0,
+            "mean": 0.0, "mean_err": 0.0,
+            "fit_type": fit_type, "fit_quality": f"ERROR: {e}",
+            "fit_obj": None,
+        }
+
+
+# ============================================================================
+# TRAITEMENT D'UNE PARTICULE
+# ============================================================================
+
+def process_particle(particle):
+    """
+    Traitement complet pour une particule :
+    - Chargement des RDataFrames
+    - Création des histogrammes filtrés
+    - Fits (gauss ou CB) + σ_eff en parallèle
+    - Export des résultats (plots + JSON)
+    
+    Returns:
+        dict contenant sigma, sigma_err, sigma_eff, sigma_eff_err,
+        tail_ratio indexés par [proc_name][variable]
+    """
+    print(f"\n{'='*70}\n[INFO] Traitement de la particule: {particle}\n{'='*70}")
+    
+    input_dir, output_dir = get_input_output_dirs(particle)
+    print(f"  Input:  {input_dir}")
+    print(f"  Output: {output_dir}")
+    
+    available = check_process_files(particle, input_dir)
+    if not available:
+        print(f"  [SKIP] Aucun fichier pour {particle}")
+        return None
+    
+    # --- Chargement RDataFrames ---
+    df = {}
+    var_col_rp = {}
+    
+    for p, fpath in available.items():
         try:
-            data = sorted(var_col_rp[p][v].GetValue())
-            filtered = filter_data_std(data, threshold=2.5, n_selections=3)
-            
-            if len(filtered) < 10:
+            df[p] = ROOT.RDataFrame("events", fpath)
+            for v in SPECIAL_LIST:
+                df[p] = df[p].Define(f"sdelta_{v}", f"delta_{v} / (true_{v} * true_{v})")
+            var_col_rp[p] = {v: df[p].Take["double"](v) for v in VAR_LIST}
+        except Exception as e:
+            print(f"  [WARNING] Erreur chargement {p}: {e}")
+            if p in df:
+                del df[p]
+    
+    # --- Données filtrées + histos ---
+    var_col, var_low, var_high, h = {}, {}, {}, {}
+    for p in df:
+        var_col[p], var_low[p], var_high[p], h[p] = {}, {}, {}, {}
+        for v in VAR_LIST:
+            try:
+                data = sorted(var_col_rp[p][v].GetValue())
+                filtered = filter_data_std(data, threshold=2.5, n_selections=3)
+                if len(filtered) < 10:
+                    continue
+                var_col[p][v] = filtered
+                var_low[p][v] = min(filtered)
+                var_high[p][v] = max(filtered)
+                h[p][v] = (df[p]
+                    .Filter(f"{v} > {var_low[p][v]} && {v} < {var_high[p][v]}")
+                    .Histo1D((v, f"{p};{AXIS_TITLES[v]}", 200,
+                              var_low[p][v], var_high[p][v]), v))
+            except Exception as e:
+                print(f"  [WARNING] Histo {p}/{v}: {e}")
+    
+    # --- Fits + σ_eff ---
+    print(f"  [INFO] Fits et extraction σ_eff...")
+    results = {
+        "sigma": {}, "sigma_err": {},
+        "mean": {}, "mean_err": {},
+        "sigma_eff": {}, "sigma_eff_err": {},
+        "tail_ratio": {},
+        "fit_type": {}, "fit_quality": {},
+    }
+    
+    for p in df:
+        for key in results:
+            results[key][p] = {}
+        
+        fname_pdf = f"{output_dir}/{p}.pdf"
+        root_fname = ROOT.TFile(f"{output_dir}/{p}.root", "RECREATE")
+        
+        c_hist = ROOT.TCanvas(f"c_{p}", f"Histograms {p}", 800, 600)
+        root_fname.cd()
+        c_hist.Print(f"{fname_pdf}[")
+        
+        for v in VAR_LIST:
+            if v not in h[p]:
+                # valeurs par défaut
+                for key in ("sigma", "sigma_err", "mean", "mean_err",
+                            "sigma_eff", "sigma_eff_err", "tail_ratio"):
+                    results[key][p][v] = 0.0
+                results["fit_type"][p][v] = "N/A"
+                results["fit_quality"][p][v] = "NO_HISTO"
                 continue
             
-            var_col[p][v] = filtered
-            var_low[p][v] = min(filtered)
-            var_high[p][v] = max(filtered)
+            # Normalisation par width (important pour la CB)
+            h[p][v].Scale(1.0, "width")
             
-            h[p][v] = (df[p]
-                .Filter(f"{v} > {var_low[p][v]} && {v} < {var_high[p][v]}")
-                .Histo1D((v, f"{p};{AXIS_TITLES[v]}", 200, var_low[p][v], var_high[p][v]), v)
-            )
-        except Exception as e:
-            print(f"  [WARNING] Erreur pour {p}/{v}: {e}")
-
-# ============================================================================
-# FITS ET EXTRACTION DES PARAMÈTRES
-# ============================================================================
-
-print("[INFO] Ajustement des histogrammes...")
-mean = {}
-mean_err = {}
-sigma = {}
-sigma_err = {}
-
-for p in processList:
-    fname = f"{outputDir}/{p}.pdf"
-    root_fname = ROOT.TFile(f"{outputDir}/{p}.root", "RECREATE")
-    
-    mean[p] = {}
-    mean_err[p] = {}
-    sigma[p] = {}
-    sigma_err[p] = {}
-    
-    c_hist = ROOT.TCanvas(f"c_{p}", f"Histograms {p}", 800, 600)
-    root_fname.cd()
-    c_hist.Print(f"{fname}[")
-    
-    for v in VAR_LIST:
-        if v not in h[p]:
-            mean[p][v] = 0
-            mean_err[p][v] = 0
-            sigma[p][v] = 0
-            sigma_err[p][v] = 0
-            continue
+            # Fit
+            fit = fit_histogram(h[p][v], particle, v, var_low[p][v], var_high[p][v])
+            results["sigma"][p][v] = fit["sigma"]
+            results["sigma_err"][p][v] = fit["sigma_err"]
+            results["mean"][p][v] = fit["mean"]
+            results["mean_err"][p][v] = fit["mean_err"]
+            results["fit_type"][p][v] = fit["fit_type"]
+            results["fit_quality"][p][v] = fit["fit_quality"]
             
-        try:
-            h[p][v].Scale(1, "width")
+            # σ_eff sur les données NON clippées (pour capturer les queues)
+            raw = list(var_col_rp[p][v].GetValue())
+            s_eff, s_eff_err = sigma_eff_68(raw)
+            results["sigma_eff"][p][v] = s_eff
+            results["sigma_eff_err"][p][v] = s_eff_err
             
-            # Crystal Ball pour certaines distributions d'électrons
-            if p.startswith("e") and v in ["delta_omega", "sdelta_pt", "sdelta_p"]:
-                f = ROOT.TF1(
-                    f"f_{p}_{v}",
-                    "ROOT::Math::crystalball_function(x, [0], [1], [2], [3])*[4]",
-                    var_low[p][v], var_high[p][v]
-                )
-                f.SetParameters(1, 1, abs(h[p][v].GetMean()), 0, h[p][v].GetMaximum())
+            # Ratio révélateur de queues
+            if fit["sigma"] > 0:
+                ratio = s_eff / fit["sigma"]
             else:
-                f = ROOT.TF1(f"f_{p}_{v}", "gaus", var_low[p][v], var_high[p][v])
+                ratio = 0.0
+            results["tail_ratio"][p][v] = ratio
             
-            h[p][v].Fit(f, "RQ")
+            # Warning si queue significative
+            if ratio > TAIL_WARNING_THRESHOLD:
+                print(f"    [TAIL] {p}/{v}: σ_eff/σ_{fit['fit_type']} = {ratio:.2f}")
             
-            mean[p][v] = f.GetParameter(1)
-            mean_err[p][v] = f.GetParError(1)
-            sigma[p][v] = f.GetParameter(2)
-            sigma_err[p][v] = f.GetParError(2)
-            
+            # Sauvegarde
             h[p][v].Write(f"hist_{p}_{v}")
             h[p][v].Draw()
-            c_hist.Print(fname)
-            
-        except Exception as e:
-            print(f"  [WARNING] Erreur de fit pour {p}/{v}: {e}")
-            mean[p][v] = 0
-            mean_err[p][v] = 0
-            sigma[p][v] = 0
-            sigma_err[p][v] = 0
-    
-    c_hist.Print(f"{fname}]")
-    root_fname.Close()
-    del c_hist  # Nettoyer explicitement
-
-# ============================================================================
-# SETUP LATEX
-# ============================================================================
-
-latex_right = ROOT.TLatex()
-latex_right.SetTextFont(42)
-latex_right.SetTextSize(0.03)
-text_right_x, text_right_y = 0.69, 0.86
-
-latex_left = ROOT.TLatex()
-latex_left.SetTextFont(42)
-latex_left.SetTextSize(0.03)
-text_left_x, text_left_y = 0.15, 0.86
-
-# ============================================================================
-# PLOTS SÉPARÉS: RÉSOLUTION vs MOMENTUM (un fichier par theta)
-# ============================================================================
-
-print("[INFO] Création des plots séparés (vs momentum)...")
-
-for t in STACK_THETA_LIST:
-    # Vérifier qu'on a des données pour cet angle
-    has_data = False
-    for momentum in MOMENTUM_LIST:
-        proc = pname("mu", t, momentum)
-        if proc in sigma:
-            for v in VAR_LIST:
-                if v in sigma[proc] and sigma[proc][v] != 0:
-                    has_data = True
-                    break
-        if has_data:
-            break
-    
-    if not has_data:
-        print(f"  [WARNING] Pas de données pour theta={t}°, skip")
-        continue
-    
-    outfile = ROOT.TFile(f"{outputDir}/p_dist_{t}.root", "recreate")
-    c = ROOT.TCanvas(f"canvas_{t}", f"Plot {t} deg", CANVAS_WIDTH, CANVAS_HEIGHT)
-    c.SetLeftMargin(PLOT_MARGIN_LEFT)
-    c.SetBottomMargin(PLOT_MARGIN_BOTTOM)
-    c.SetWindowSize(int(CANVAS_WIDTH * plot_width), int(CANVAS_HEIGHT * plot_height))
-    
-    p_dist = {}
-    p_dist_t = {}
-    fname = f"{outputDir}/p_dist_{t}.pdf"
-    c.Print(f"{fname}[")
-    
-    legend = {}
-    for v in VAR_LIST:
-        legend[v] = ROOT.TLegend(0.62, 0.62, 0.82, 0.82)
-        legend[v].SetBorderSize(0)
-        legend[v].SetFillStyle(0)
-        legend[v].SetTextFont(62)
+            c_hist.Print(fname_pdf)
         
-        p_dist[v] = ROOT.TMultiGraph()
-        p_dist_t[v] = {}
-        marker_idx = 0
-        color_idx = 0
+        c_hist.Print(f"{fname_pdf}]")
+        root_fname.Close()
+        del c_hist
+    
+    # --- Export JSON récapitulatif pour compare_particles.py ---
+    summary = {
+        "detector_model": DETECTOR_MODEL,
+        "digi_mode": DIGI_MODE,
+        "particle": particle,
+        "nevts": NEVTS,
+        "theta_list": THETA_LIST,
+        "momentum_list": MOMENTUM_LIST,
+        "var_list": VAR_LIST,
+        "results": {},  # [proc_name][variable] -> {sigma, sigma_eff, ...}
+    }
+    for p in df:
+        summary["results"][p] = {}
+        for v in VAR_LIST:
+            summary["results"][p][v] = {
+                "sigma":         results["sigma"][p].get(v, 0.0),
+                "sigma_err":     results["sigma_err"][p].get(v, 0.0),
+                "sigma_eff":     results["sigma_eff"][p].get(v, 0.0),
+                "sigma_eff_err": results["sigma_eff_err"][p].get(v, 0.0),
+                "tail_ratio":    results["tail_ratio"][p].get(v, 0.0),
+                "fit_type":      results["fit_type"][p].get(v, "N/A"),
+                "fit_quality":   results["fit_quality"][p].get(v, "N/A"),
+            }
+    
+    json_path = os.path.join(output_dir, "summary.json")
+    with open(json_path, "w") as fjson:
+        json.dump(summary, fjson, indent=2)
+    print(f"  [INFO] Résumé JSON: {json_path}")
+    
+    results["_output_dir"] = output_dir
+    return results
+
+
+# ============================================================================
+# PLOTS : pour une particule, σ vs p à θ fixé
+# ============================================================================
+
+def make_plots_vs_momentum(particle, results, metric="sigma"):
+    """
+    Plots de σ (ou σ_eff) en fonction de p, un fichier par angle θ.
+    metric ∈ {"sigma", "sigma_eff"} pour choisir la métrique.
+    """
+    if results is None:
+        return
+    output_dir = results["_output_dir"]
+    sigma = results[metric]
+    sigma_err = results[f"{metric}_err"]
+    
+    suffix = "" if metric == "sigma" else "_eff"
+    
+    latex_left = ROOT.TLatex()
+    latex_left.SetTextFont(42)
+    latex_left.SetTextSize(0.03)
+    
+    for t in STACK_THETA_LIST:
+        # Vérifier qu'il y a des données
+        has_data = any(
+            pname(particle, t, m) in sigma
+            and any(sigma[pname(particle, t, m)].get(v, 0) != 0 for v in VAR_LIST)
+            for m in MOMENTUM_LIST
+        )
+        if not has_data:
+            continue
         
-        for particle in PARTICLE_LIST:
-            particle_symbols = {"mu": r"\mu", "pi": r"\pi", "e": r"e"}
-            particle_symbol = particle_symbols.get(particle, particle)
-            legend[v].SetHeader(f"Single {particle_symbol}^{{-}}")
-            
-            # Collecter les points disponibles
-            y_vals = []
-            y_errs = []
-            x_vals = []
-            
-            for momentum in MOMENTUM_LIST:
-                proc = pname(particle, t, momentum)
-                if proc in sigma and v in sigma[proc] and sigma[proc][v] != 0:
+        outfile = ROOT.TFile(f"{output_dir}/p_dist{suffix}_{t}.root", "recreate")
+        c = ROOT.TCanvas(f"canvas_{particle}_{t}{suffix}",
+                        f"{particle} {t} deg {metric}",
+                        CANVAS_WIDTH, CANVAS_HEIGHT)
+        c.SetLeftMargin(PLOT_MARGIN_LEFT)
+        c.SetBottomMargin(PLOT_MARGIN_BOTTOM)
+        
+        fname = f"{output_dir}/p_dist{suffix}_{t}.pdf"
+        c.Print(f"{fname}[")
+        
+        for v in VAR_LIST:
+            y_vals, y_errs, x_vals = [], [], []
+            for m in MOMENTUM_LIST:
+                proc = pname(particle, t, m)
+                if proc in sigma and sigma[proc].get(v, 0) != 0:
                     y_vals.append(sigma[proc][v])
                     y_errs.append(sigma_err[proc][v])
-                    x_vals.append(float(momentum))
+                    x_vals.append(get_x_value(m, t))
             
             if len(x_vals) < 2:
                 continue
@@ -383,104 +435,88 @@ for t in STACK_THETA_LIST:
             err_y = ROOT.std.vector["double"](y_errs)
             err_x = ROOT.std.vector["double"]([0] * len(x_vals))
             
-            p_dist_t[v][t] = ROOT.TGraphErrors(len(x_vals), x.data(), y.data(), err_x.data(), err_y.data())
-            p_dist_t[v][t].SetMarkerStyle(MARKER_STYLES[marker_idx % len(MARKER_STYLES)])
-            p_dist_t[v][t].SetMarkerColor(COLORS[color_idx % len(COLORS)])
-            p_dist_t[v][t].Scale(UNIT_SCALE[v])
-            p_dist[v].Add(p_dist_t[v][t])
-            legend[v].AddEntry(p_dist_t[v][t], f"#theta = {t} deg", "p")
+            gr = ROOT.TGraphErrors(len(x_vals), x.data(), y.data(),
+                                   err_x.data(), err_y.data())
+            gr.SetMarkerStyle(MARKER_STYLES[0])
+            gr.SetMarkerColor(COLORS[0])
+            gr.Scale(UNIT_SCALE[v])
             
-            marker_idx += 1
-            color_idx += 1
+            mg = ROOT.TMultiGraph()
+            mg.Add(gr)
+            metric_label = "#sigma" if metric == "sigma" else "#sigma_{eff}"
+            mg.SetTitle(f";{get_x_label()};{AXIS_TITLES[v]} [{metric_label}]")
+            
+            c.SetLogx()
+            c.SetLogy()
+            c.SetRightMargin(0.15)
+            c.SetTopMargin(0.15)
+            c.GetPad(0).SetTickx(1)
+            c.GetPad(0).SetTicky(1)
+            
+            mg.Draw("APE")
+            mg.GetXaxis().SetTitleSize(0.06)
+            mg.GetYaxis().SetTitleSize(0.06)
+            
+            latex_left.DrawLatexNDC(0.15, 0.86, f"FCC-ee {DETECTOR_MODEL}")
+            
+            leg = ROOT.TLegend(0.62, 0.62, 0.82, 0.82)
+            leg.SetBorderSize(0)
+            leg.SetFillStyle(0)
+            symbols = {"mu": r"\mu", "pi": r"\pi", "e": r"e"}
+            leg.SetHeader(f"Single {symbols.get(particle, particle)}^{{-}} ({metric})")
+            leg.AddEntry(gr, f"#theta = {t} deg", "p")
+            leg.Draw()
+            
+            c.Print(fname)
+            outfile.cd()
+            c.Write(f"Canvas_{v}")
         
-        if p_dist[v].GetListOfGraphs() is None or p_dist[v].GetListOfGraphs().GetSize() == 0:
+        c.Print(f"{fname}]")
+        outfile.Close()
+
+
+# ============================================================================
+# PLOTS : pour une particule, σ vs θ à p fixé
+# ============================================================================
+
+def make_plots_vs_theta(particle, results, metric="sigma"):
+    """Plots de σ vs θ, un fichier par impulsion p."""
+    if results is None:
+        return
+    output_dir = results["_output_dir"]
+    sigma = results[metric]
+    sigma_err = results[f"{metric}_err"]
+    
+    suffix = "" if metric == "sigma" else "_eff"
+    
+    latex_left = ROOT.TLatex()
+    latex_left.SetTextFont(42)
+    latex_left.SetTextSize(0.03)
+    
+    for momentum in STACK_MOMENTUM_LIST:
+        has_data = any(
+            pname(particle, t, momentum) in sigma
+            and any(sigma[pname(particle, t, momentum)].get(v, 0) != 0 for v in VAR_LIST)
+            for t in THETA_LIST
+        )
+        if not has_data:
             continue
         
-        p_dist[v].SetTitle(f";p [GeV];{AXIS_TITLES[v]}")
+        outfile = ROOT.TFile(f"{output_dir}/t_dist{suffix}_{momentum}.root", "recreate")
+        c = ROOT.TCanvas(f"canvas_{particle}_{momentum}{suffix}",
+                        f"{particle} {momentum} GeV {metric}",
+                        CANVAS_WIDTH, CANVAS_HEIGHT)
+        c.SetLeftMargin(PLOT_MARGIN_LEFT)
+        c.SetBottomMargin(PLOT_MARGIN_BOTTOM)
         
-        c.SetLogx()
-        c.SetLogy()
-        c.SetRightMargin(0.15)
-        c.SetTopMargin(0.15)
+        fname = f"{output_dir}/t_dist{suffix}_{momentum}.pdf"
+        c.Print(f"{fname}[")
         
-        pad = c.GetPad(0)
-        pad.SetTickx(1)
-        pad.SetTicky(1)
-        
-        p_dist[v].Draw("APE")
-        p_dist[v].GetXaxis().SetTitleSize(0.06)
-        p_dist[v].GetYaxis().SetTitleSize(0.06)
-        
-        latex_left.DrawLatexNDC(text_left_x, text_left_y, "FCC-ee CLD")
-        legend[v].Draw()
-        c.Print(fname)
-        
-        c.Draw()
-        outfile.cd()
-        c.Write(f"Canvas_{v}")
-    
-    c.Print(f"{fname}]")
-    outfile.Close()
-
-# ============================================================================
-# PLOTS SÉPARÉS: RÉSOLUTION vs THETA (un fichier par momentum)
-# ============================================================================
-
-print("[INFO] Création des plots séparés (vs theta)...")
-
-for momentum in STACK_MOMENTUM_LIST:
-    # Vérifier qu'on a des données pour cette impulsion
-    has_data = False
-    for t in THETA_LIST:
-        proc = pname("mu", t, momentum)
-        if proc in sigma:
-            for v in VAR_LIST:
-                if v in sigma[proc] and sigma[proc][v] != 0:
-                    has_data = True
-                    break
-        if has_data:
-            break
-    
-    if not has_data:
-        print(f"  [WARNING] Pas de données pour p={momentum}GeV, skip")
-        continue
-    
-    outfile = ROOT.TFile(f"{outputDir}/t_dist_{momentum}.root", "recreate")
-    c = ROOT.TCanvas(f"canvas_{momentum}", f"Plot {momentum} GeV", CANVAS_WIDTH, CANVAS_HEIGHT)
-    c.SetLeftMargin(PLOT_MARGIN_LEFT)
-    c.SetBottomMargin(PLOT_MARGIN_BOTTOM)
-    c.SetWindowSize(int(CANVAS_WIDTH * plot_width), int(CANVAS_HEIGHT * plot_height))
-    
-    t_dist = {}
-    t_dist_p = {}
-    fname = f"{outputDir}/t_dist_{momentum}.pdf"
-    c.Print(f"{fname}[")
-    
-    legend = {}
-    for v in VAR_LIST:
-        legend[v] = ROOT.TLegend(0.62, 0.62, 0.82, 0.82)
-        legend[v].SetBorderSize(0)
-        legend[v].SetFillStyle(0)
-        legend[v].SetTextFont(62)
-        
-        t_dist[v] = ROOT.TMultiGraph()
-        t_dist_p[v] = {}
-        marker_idx = 0
-        color_idx = 0
-        
-        for particle in PARTICLE_LIST:
-            particle_symbols = {"mu": r"\mu", "pi": r"\pi", "e": r"e"}
-            particle_symbol = particle_symbols.get(particle, particle)
-            legend[v].SetHeader(f"Single {particle_symbol}^{{-}}")
-            
-            # Collecter les points disponibles
-            y_vals = []
-            y_errs = []
-            x_vals = []
-            
+        for v in VAR_LIST:
+            y_vals, y_errs, x_vals = [], [], []
             for t in THETA_LIST:
                 proc = pname(particle, t, momentum)
-                if proc in sigma and v in sigma[proc] and sigma[proc][v] != 0:
+                if proc in sigma and sigma[proc].get(v, 0) != 0:
                     y_vals.append(sigma[proc][v])
                     y_errs.append(sigma_err[proc][v])
                     x_vals.append(float(t))
@@ -493,44 +529,81 @@ for momentum in STACK_MOMENTUM_LIST:
             err_y = ROOT.std.vector["double"](y_errs)
             err_x = ROOT.std.vector["double"]([0] * len(x_vals))
             
-            t_dist_p[v][momentum] = ROOT.TGraphErrors(len(x_vals), x.data(), y.data(), err_x.data(), err_y.data())
-            t_dist_p[v][momentum].SetMarkerStyle(MARKER_STYLES[marker_idx % len(MARKER_STYLES)])
-            t_dist_p[v][momentum].SetMarkerColor(COLORS[color_idx % len(COLORS)])
-            t_dist_p[v][momentum].Scale(UNIT_SCALE[v])
-            t_dist[v].Add(t_dist_p[v][momentum])
-            legend[v].AddEntry(t_dist_p[v][momentum], f"p = {momentum}GeV", "p")
+            gr = ROOT.TGraphErrors(len(x_vals), x.data(), y.data(),
+                                   err_x.data(), err_y.data())
+            gr.SetMarkerStyle(MARKER_STYLES[0])
+            gr.SetMarkerColor(COLORS[0])
+            gr.Scale(UNIT_SCALE[v])
             
-            marker_idx += 1
-            color_idx += 1
+            mg = ROOT.TMultiGraph()
+            mg.Add(gr)
+            metric_label = "#sigma" if metric == "sigma" else "#sigma_{eff}"
+            mg.SetTitle(f";#theta [deg];{AXIS_TITLES[v]} [{metric_label}]")
+            
+            c.SetLogy()
+            c.SetRightMargin(0.15)
+            c.SetTopMargin(0.15)
+            c.GetPad(0).SetTickx(1)
+            c.GetPad(0).SetTicky(1)
+            
+            mg.Draw("AP")
+            mg.GetXaxis().SetTitleSize(0.06)
+            mg.GetYaxis().SetTitleSize(0.06)
+            
+            latex_left.DrawLatexNDC(0.15, 0.86, f"FCC-ee {DETECTOR_MODEL}")
+            
+            leg = ROOT.TLegend(0.62, 0.62, 0.82, 0.82)
+            leg.SetBorderSize(0)
+            leg.SetFillStyle(0)
+            symbols = {"mu": r"\mu", "pi": r"\pi", "e": r"e"}
+            leg.SetHeader(f"Single {symbols.get(particle, particle)}^{{-}} ({metric})")
+            leg.AddEntry(gr, f"p = {momentum} GeV", "p")
+            leg.Draw()
+            
+            c.Print(fname)
+            outfile.cd()
+            c.Write(f"Canvas_{v}")
         
-        if t_dist[v].GetListOfGraphs() is None or t_dist[v].GetListOfGraphs().GetSize() == 0:
-            continue
-        
-        t_dist[v].SetTitle(f";#theta [deg];{AXIS_TITLES[v]}")
-        
-        c.SetLogx(False)
-        c.SetLogy()
-        c.SetRightMargin(0.15)
-        c.SetTopMargin(0.15)
-        
-        pad = c.GetPad(0)
-        pad.SetTickx(1)
-        pad.SetTicky(1)
-        
-        t_dist[v].Draw("AP")
-        t_dist[v].GetXaxis().SetTitleSize(0.06)
-        t_dist[v].GetYaxis().SetTitleSize(0.06)
-        
-        latex_left.DrawLatexNDC(text_left_x, text_left_y, "FCC-ee CLD")
-        legend[v].Draw()
-        c.Print(fname)
-        
-        c.Draw()
-        outfile.cd()
-        c.Write(f"Canvas_{v}")
-    
-    c.Print(f"{fname}]")
-    outfile.Close()
+        c.Print(f"{fname}]")
+        outfile.Close()
 
-print("\n[INFO] Terminé!")
-print(f"[INFO] Plots sauvegardés dans: {outputDir}")
+
+# ============================================================================
+# MAIN
+# ============================================================================
+
+if __name__ == "__main__":
+    print("\n" + "=" * 70)
+    print(f"PLOTS TRACKING SEP — {DETECTOR_MODEL} / {DIGI_MODE}")
+    print("=" * 70)
+    
+    all_results = {}
+    
+    for particle in PARTICLE_LIST:
+        results = process_particle(particle)
+        if results is not None:
+            all_results[particle] = results
+            make_plots_vs_momentum(particle, results, metric="sigma")
+            make_plots_vs_momentum(particle, results, metric="sigma_eff")
+            make_plots_vs_theta(particle, results, metric="sigma")
+            make_plots_vs_theta(particle, results, metric="sigma_eff")
+    
+    print("\n" + "=" * 70)
+    print("[INFO] Résumé : qualité des fits (particules × % de fits réussis)")
+    print("=" * 70)
+    for particle, results in all_results.items():
+        total = 0
+        ok = 0
+        tails = 0
+        for proc in results["fit_quality"]:
+            for v in results["fit_quality"][proc]:
+                total += 1
+                if results["fit_quality"][proc][v] == "OK":
+                    ok += 1
+                if results["tail_ratio"][proc].get(v, 0) > TAIL_WARNING_THRESHOLD:
+                    tails += 1
+        if total:
+            print(f"  {particle}: {ok}/{total} fits OK ({100*ok/total:.0f}%), "
+                  f"{tails} points avec queues > {TAIL_WARNING_THRESHOLD}")
+    
+    print("\n[INFO] Terminé !")

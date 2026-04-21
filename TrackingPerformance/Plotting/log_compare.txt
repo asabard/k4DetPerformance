@@ -1,0 +1,135 @@
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf has been closed
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf has been closed
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf has been closed
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf has been closed
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf has been closed
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf has been closed
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf has been closed
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf has been created
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: Current canvas added to pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+Info in <TCanvas::Print>: pdf file /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf has been closed
+
+======================================================================
+COMPARAISON PARTICULES — CLD_o2_v07 / parametric
+======================================================================
+
+[INFO] Chargement des summaries...
+  [OK] mu: chargé depuis /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/mu/plots/summary.json
+
+[INFO] 1 particules chargées: ['mu']
+[INFO] Répertoire créé: /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare
+
+[INFO] Output: /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare
+
+[INFO] Plots σ vs θ pour chaque p cible...
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_1GeV.pdf
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_10GeV.pdf
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_theta_100GeV.pdf
+
+[INFO] Plots σ vs p pour chaque θ cible...
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta10deg.pdf
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta30deg.pdf
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta50deg.pdf
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta70deg.pdf
+  [OK] /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare/compare_vs_momentum_theta90deg.pdf
+
+======================================================================
+TAIL RATIO σ_eff/σ_fit pour sdelta_pt
+(>1.3 = queues significatives ; >2.0 = dominées par queues)
+======================================================================
+
+  mu:
+    p \ θ     θ= 10  θ= 20  θ= 30  θ= 40  θ= 50  θ= 60  θ= 70  θ= 80  θ= 90
+    p=1      1.17    1.08    1.10    1.13    1.08    1.15    1.12    1.12    1.15  
+    p=2      1.11    1.04    1.11    1.07    1.08    1.06    1.06    1.10    1.09  
+    p=3      1.10    1.04    1.08    1.05    1.05    1.10    1.05    1.07    1.09  
+    p=5      1.12    1.08    1.11    1.10    1.04    1.09    1.09    1.07    1.08  
+    p=10     1.08    1.03    1.08    1.05    1.05    1.10    1.06    1.05    1.09  
+    p=15     1.09    1.07    1.08    1.10    1.07    1.08    1.09    1.08    1.02  
+    p=20     1.12    1.07    1.09    1.06    1.07    1.09    1.10    1.06    1.09  
+    p=30     1.10    1.10    1.05    1.05    1.09    1.08    1.05    1.04    1.08  
+    p=50     1.12    1.07    1.08    1.07    1.04    1.08    1.05    1.08    1.09  
+    p=60     1.11    1.10    1.07    1.07    1.06    1.07    1.06    1.06    1.06  
+    p=100    1.13    1.07    1.06    1.07    1.03    1.07    1.05    1.05    1.06  
+    p=150    1.07    1.06    1.08    1.07    1.06    1.11    1.07    1.10    1.04  
+
+[INFO] Terminé !
+[INFO] Figures dans: /eos/user/a/asabard/DigiPerformance/CLD_o2_v07/ANALYSIS/parametric/_compare

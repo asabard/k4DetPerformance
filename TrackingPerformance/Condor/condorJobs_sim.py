@@ -1,215 +1,168 @@
 #!/usr/bin/env python
+"""
+Soumission des jobs de SIMULATION sur HTCondor (lxplus).
 
+Adapté de ton step1_simu.sh pour coller au framework utils.load_config :
+  - θ = "global"      -> thetaMin=10°, thetaMax=170°
+  - THETA_MODE=smeared-> thetaMin=θ-1°, thetaMax=θ+1°
+  - Seed, naming SIM_<part>_<E>GeV_theta<θ>_<N>evts_jobK_edm4hep.root
+  - Split de N_EVTS en N_EVTS_PER_JOB par combinaison (particle, énergie, θ)
+  - Output sur EOS suivant l'arborescence SIM/<part>/[ThetaNotFixed/]<E>GeV/<N>evts
+
+Usage :
+    python condorJobs_sim.py --config config_cld
+"""
+
+import itertools
 import sys
 from math import ceil
-from os import fspath, system  # for execution at the end
+from os import fspath, system
 from pathlib import Path
 
 import ROOT
 from utils import load_config, parse_args
 
 
+def build_sim_output_dir(config, particle: str, energy: int) -> Path:
+    """Arborescence EOS de sortie, identique à config.sh::set_kinematics."""
+    if config.THETA_MODE == "smeared":
+        sub = Path(particle) / "ThetaNotFixed" / f"{energy}GeV"
+    else:
+        sub = Path(particle) / f"{energy}GeV"
+    return config.data_dir / "SIM" / sub / f"{config.N_EVTS}evts"
+
+
+def build_theta_range(theta, mode: str) -> tuple[str, str]:
+    """Retourne (thetaMin, thetaMax) en reproduisant la logique du bash."""
+    if theta == "global":
+        return "10*deg", "170*deg"
+    if mode == "smeared":
+        return f"{int(theta) - 1}*deg", f"{int(theta) + 1}*deg"
+    return f"{theta}*deg", f"{theta}*deg"
+
+
 def main() -> None:
-
-    # ==========================
-    # Load specified config file
-    # ==========================
-
     args = parse_args()
     config = load_config(args.config)
 
-    # ==========================
-    # Check paths
-    # ==========================
+    # --- Sanity checks -----------------------------------------------------
+    assert config.sim_steering_file.exists(), \
+        f"Steering file introuvable : {config.sim_steering_file}"
+    assert config.setup.exists(), \
+        f"Setup script introuvable : {config.setup}"
+    assert isinstance(config.N_EVTS, int)
+    assert isinstance(config.N_EVTS_PER_JOB, int)
 
-    assert (
-        config.sim_steering_file.exists()
-    ), f"The file {config.sim_steering_file} does not exist"
-    assert (
-        config.detector_dir.exists()
-    ), f"The folder {config.detector_dir} does not exist"
-
-    # ==========================
-    # Parameters Initialisation
-    # ==========================
-
-    assert isinstance(config.N_EVTS, int), "config.N_EVTS must be of type integer"
-    assert isinstance(
-        config.N_EVTS_PER_JOB, int
-    ), "config.N_EVTS_PER_JOB must be of type integer"
-
-    n_para_sets = (
+    n_jobs_per_set = ceil(config.N_EVTS / config.N_EVTS_PER_JOB)
+    n_sets = (
         len(config.detector_model_list)
         * len(config.particle_list)
         * len(config.theta_list)
         * len(config.momentum_list)
     )
-    # number of parallel jobs with same parameter combination/set
-    n_jobs_per_para_set = ceil(
-        config.N_EVTS / config.N_EVTS_PER_JOB
-    )  # Nevts is lower limit
-    # total number of jobs, can be printed for debugging/information
-    n_jobs = n_jobs_per_para_set * n_para_sets
+    print(f"[INFO] {n_sets} combinaisons × {n_jobs_per_set} jobs "
+          f"= {n_sets * n_jobs_per_set} jobs condor à préparer")
 
-    # ===========================
-    # Directory Setup and Checks
-    # ===========================
-
-    # Define directories for input and output
-    directory_jobs = (
-        config.sim_condor_dir
-        / f"{config.particle_list[0]}_{config.detector_model_list[0]}"
-    )
-    sim_eos_dir = config.data_dir / f"{config.detector_model_list[0]}" / "SIM"  # output
-
-    # Enable output checks
-    CHECK_OUTPUT = True
-    """
-    -does not work-
-    Set to True to enable checks, False to disable
-    It will check if the ouputs exist and contain correct number of events
-    if not it will send job to rerun simulation
-    """
-
-    # Check if the directory exists and exit if it does
+    # --- Répertoire de soumission (un par détecteur) -----------------------
+    directory_jobs = config.sim_condor_dir / config.detector_model_list[0]
     try:
         directory_jobs.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
-        print(
-            f"Error: Directory '{directory_jobs}' already exists and should not be overwritten."
-        )
+        print(f"[ERROR] '{directory_jobs}' existe déjà.")
+        print("        Supprime-le ou renomme-le avant de resoumettre.")
         sys.exit(1)
+    (directory_jobs / "log").mkdir(exist_ok=True)
 
-    sim_eos_dir.mkdir(
-        parents=True, exist_ok=True
-    )  # This will create the directory if it doesn't exist, without raising an error if it does
+    NEED_SCRIPTS = False
 
-    # =======================
-    # Simulation Job Creation
-    # =======================
-
-    # Create all possible combinations
-    import itertools
-
-    iter_of_combined_variables = itertools.product(
+    combos = itertools.product(
         config.theta_list,
         config.momentum_list,
         config.particle_list,
         config.detector_model_list,
     )
 
-    NEED_TO_CREATE_SCRIPTS = False
+    for theta, energy, part, dect in combos:
+        out_dir = build_sim_output_dir(config, part, energy)
+        out_dir.mkdir(parents=True, exist_ok=True)
 
-    for theta, momentum, part, dect in iter_of_combined_variables:
-        for task_index in range(n_jobs_per_para_set):
+        t_min, t_max = build_theta_range(theta, config.THETA_MODE)
+        compact = Path("$k4geo_DIR") / config.det_mod_paths[dect]
 
-            output_file_name_parts = [
-                f"SIM_{dect}",
-                f"{part}",
-                f"{theta}_deg",
-                f"{momentum}_GeV",
-                f"{config.N_EVTS_PER_JOB}_evts",
-                f"{task_index}",
-            ]
+        for k in range(n_jobs_per_set):
+            out_name = (
+                f"SIM_{part}_{energy}GeV_theta{theta}_"
+                f"{config.N_EVTS_PER_JOB}evts_job{k}_edm4hep.root"
+            )
+            out_path = out_dir / out_name
 
-            if config.EDM4HEP_SUFFIX_WITH_UNDERSCORE:
-                output_file_name_parts.append("edm4hep")
-                output_file_name = Path("_".join(output_file_name_parts)).with_suffix(
-                    ".root"
-                )
-            else:
-                output_file_name = Path("_".join(output_file_name_parts)).with_suffix(
-                    ".edm4hep.root"
-                )
-
-            # Check if the output file already exists and has correct Nb of events
-            output_dir = sim_eos_dir / part
-            output_dir.mkdir(parents=True, exist_ok=True)
-            output_file_path = output_dir / output_file_name
-
-            # FIXME: Issue #4
-            if CHECK_OUTPUT and output_file_path.exists():
-                root_file = ROOT.TFile(fspath(output_file_path), "READ")
-                events_tree = root_file.Get("events")
-                if events_tree:
-                    if events_tree.GetEntries() == config.N_EVTS_PER_JOB:
-                        root_file.Close()
+            # Skip si l'output existe déjà avec le bon nombre d'events
+            if out_path.exists():
+                try:
+                    f_ = ROOT.TFile(fspath(out_path), "READ")
+                    tree = f_.Get("events")
+                    if tree and tree.GetEntries() == config.N_EVTS_PER_JOB:
+                        f_.Close()
                         continue
-                root_file.Close()
-            else:
-                NEED_TO_CREATE_SCRIPTS = True
+                    f_.Close()
+                except Exception:
+                    pass
+            NEED_SCRIPTS = True
 
-            # Build ddsim command
-            arguments = [
-                f" --compactFile {Path('$k4geo_DIR') / config.det_mod_paths[config.detector_model_list[0]]}",
-                f"--outputFile {output_file_name}",
+            # Chaque job reçoit un seed différent pour éviter les événements
+            # dupliqués entre sous-jobs d'une même combinaison
+            job_seed = int(config.SEED) + k
+
+            ddsim_args = [
+                f"--compactFile {compact}",
+                f"--outputFile {out_name}",
                 f"--steeringFile {config.sim_steering_file}",
+                f"--random.seed {job_seed}",
                 "--enableGun",
-                f"--gun.particle {part}-",
-                f"--gun.energy {momentum}*GeV",
+                f"--gun.particle {part}",
+                f"--gun.energy {energy}*GeV",
                 "--gun.distribution uniform",
-                f"--gun.thetaMin {theta}*deg",
-                f"--gun.thetaMax {theta}*deg",
+                f"--gun.thetaMin {t_min}",
+                f"--gun.thetaMax {t_max}",
                 "--crossingAngleBoost 0",
                 f"--numberOfEvents {config.N_EVTS_PER_JOB}",
             ]
-            command = f"ddsim {' '.join(arguments)} > /dev/null"
+            ddsim_cmd = "ddsim " + " ".join(ddsim_args)
 
-            # Write bash script for job execution
-            bash_script = (
-                "#!/bin/bash \n"
-                f"source {config.setup} \n"
-                f"{command} \n"
-                f"xrdcp {output_file_name} root://eosuser.cern.ch/{output_dir} \n"
-                f"rm {output_file_name}"
+            bash = (
+                "#!/bin/bash\n"
+                "set -e\n"
+                f"source {config.setup}\n"
+                "cd $TMPDIR 2>/dev/null || cd /tmp\n"
+                f"{ddsim_cmd}\n"
+                f"xrdcp -f {out_name} root://eosuser.cern.ch/{out_path}\n"
+                f"rm -f {out_name}\n"
             )
-            bash_file_name_parts = [
-                "bash_script",
-                dect,
-                part,
-                f"{theta}_deg",
-                f"{momentum}_GeV",
-                str(task_index),
-            ]
-            bash_file_path = (
-                directory_jobs / "_".join(bash_file_name_parts)
-            ).with_suffix(".sh")
+            bash_name = (
+                f"sim_{dect}_{part}_{energy}GeV_theta{theta}_job{k}.sh"
+            )
+            bash_path = directory_jobs / bash_name
+            bash_path.write_text(bash)
+            bash_path.chmod(0o755)
 
-            with open(bash_file_path, "w", encoding="utf-8") as bash_file:
-                bash_file.write(bash_script)
-                bash_file.close()
-
-    if not NEED_TO_CREATE_SCRIPTS:
-        print("All output files are correct.")
-        print(f"The output file path: {output_file_path}")
+    if not NEED_SCRIPTS:
+        print("[INFO] Toutes les sorties existent déjà — rien à soumettre.")
         sys.exit(0)
 
-    # ============================
-    # Condor Submission Script
-    # ============================
-
-    # Write the condor submission script
-    condor_script = (
-        "executable = $(filename) \n"
-        "arguments = $(ClusterId) $(ProcId) \n"
-        "output = output.$(ClusterId).$(ProcId).out \n"
-        "error = error.$(ClusterId).$(ProcId).err \n"
-        "log = log.$(ClusterId).log \n"
-        f'+JobFlavour = "{config.JOB_FLAVOR}" \n'
-        "queue filename matching files *.sh \n"
+    # --- Fichier de soumission HTCondor ------------------------------------
+    condor_sub = (
+        "executable = $(filename)\n"
+        "arguments  = $(ClusterId) $(ProcId)\n"
+        "output     = log/output.$(ClusterId).$(ProcId).out\n"
+        "error      = log/error.$(ClusterId).$(ProcId).err\n"
+        "log        = log/log.$(ClusterId).log\n"
+        f'+JobFlavour = "{config.JOB_FLAVOR}"\n'
+        "queue filename matching files sim_*.sh\n"
     )
-    condor_file_path = directory_jobs / "condor_script.sub"
-    with open(condor_file_path, "w", encoding="utf-8") as condor_file:
-        condor_file.write(condor_script)
-        condor_file.close()
+    (directory_jobs / "condor_script.sub").write_text(condor_sub)
 
-    # ====================
-    # Submit Job to Condor
-    # ====================
-
-    system(
-        "cd " + fspath(directory_jobs) + "; condor_submit condor_script.sub"
-    )  # FIXME: use subprocess instead?
+    print(f"[INFO] Soumission depuis {directory_jobs}")
+    system(f"cd {fspath(directory_jobs)}; condor_submit condor_script.sub")
 
 
 if __name__ == "__main__":

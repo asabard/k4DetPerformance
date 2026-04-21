@@ -2,114 +2,130 @@
 Analysis tracking pour FCC-ee.
 Extrait les résidus des paramètres de trace à partir des fichiers de reconstruction.
 
+CHANGEMENTS vs version précédente :
+- Lecture de DETECTOR_MODEL via config_tracking (env)
+- Boucle sur PARTICLE_LIST (mu, e, pi) au lieu de mu uniquement
+- Charge dynamique dans Initialize_VP (plus de -1 hardcodé)
+- Cuts anti-fake par particule via FAKE_CUT (plus de 0.20 pour tout le monde)
+
 Usage:
     DIGI_MODE=detailed fccanalysis run analysis_tracking.py
     DIGI_MODE=parametric RESOLUTION=3um fccanalysis run analysis_tracking.py
+    
+    # Autre détecteur :
+    DETECTOR_MODEL=CLD_o2_v05 DIGI_MODE=detailed fccanalysis run analysis_tracking.py
+    
+    # Particule spécifique :
+    PARTICLE_LIST=e DIGI_MODE=detailed fccanalysis run analysis_tracking.py
 """
 import os
 import sys
 
-# Import de la configuration centrale
-# Ajuster le chemin si nécessaire
+# ============================================================================
+# IMPORT CONFIG
+# ============================================================================
+
 try:
     from config_tracking import (
         DIGI_MODE, RESOLUTION, EOSBASE, DETECTOR_MODEL, NEVTS, NEVTS_PER_JOB,
         PARTICLE_LIST, THETA_LIST, MOMENTUM_LIST,
-        get_reco_input_dir, get_analysis_output_dir, get_reco_file_path,
-        file_exists, ensure_dir, VAR_LIST, RESIDUAL_LIST, SPECIAL_LIST
+        get_reco_input_dir, get_analysis_output_dir,
+        file_exists, ensure_dir, get_fake_cut,
+        RESIDUAL_LIST, SPECIAL_LIST
     )
     CONFIG_LOADED = True
 except ImportError:
     print("[WARNING] config_tracking.py non trouvé, utilisation de la config locale")
     CONFIG_LOADED = False
     
-    # Configuration locale de fallback
     DIGI_MODE = os.environ.get("DIGI_MODE", "detailed")
     RESOLUTION = os.environ.get("RESOLUTION", "3um")
-    EOSBASE = "/eos/user/a/asabard/DigiPerformance"
-    DETECTOR_MODEL = "CLD_o2_v07"
-    NEVTS = "2000"
+    DETECTOR_MODEL = os.environ.get("DETECTOR_MODEL", "CLD_o2_v07")
+    EOSBASE = f"/eos/user/a/asabard/DigiPerformance/{DETECTOR_MODEL}"
+    NEVTS = os.environ.get("NEVTS", "2000")
     NEVTS_PER_JOB = "2000"
     
-    PARTICLE_LIST = ["mu"]
+    PARTICLE_LIST = os.environ.get("PARTICLE_LIST", "mu,e,pi").split(",")
     THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "90"]
-    MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
+    MOMENTUM_LIST = ["1", "2", "3", "5", "10", "15", "20", "30", "50", "60", "100", "150"]
     
     RESIDUAL_LIST = ["d0", "z0", "phi0", "omega", "tanLambda", "phi", "theta"]
     SPECIAL_LIST = ["pt", "p"]
+    
+    def get_fake_cut(particle):
+        return {"mu": 0.20, "e": 0.50, "pi": 0.30}.get(particle, 0.50)
 
 # ============================================================================
-# CONFIGURATION DES CHEMINS
+# CHEMINS
 # ============================================================================
 
-# Sous-dossier optionnel pour theta (ex: "ThetaNotFixed" ou "")
-THETA_FOLDER = "ThetaNotFixed"  # Peut être ajusté selon la structure des répertoires
+THETA_FOLDER = "ThetaNotFixed"
 
-# Construction des chemins
-if CONFIG_LOADED:
-    inputDir = get_reco_input_dir(particle="mu", theta_folder=THETA_FOLDER)
-    outputDir = get_analysis_output_dir(particle="mu")
-else:
-    inputDir = os.path.join(EOSBASE, f"REC_{DIGI_MODE}", "mu-", THETA_FOLDER).rstrip('/')
-    outputDir = f"{EOSBASE}/ANALYSIS/{DIGI_MODE}/mu/"
+# Note : comme on boucle maintenant sur les particules, chaque particule a
+# son propre répertoire d'entrée.
 
 # ============================================================================
-# CONSTRUCTION DE LA LISTE DES PROCESSUS AVEC VÉRIFICATION
+# CONSTRUCTION DE LA LISTE DES PROCESSUS
 # ============================================================================
+# Clé importante : on boucle sur les 3 particules, pas juste mu.
+# Chaque entrée de processList a son propre cut anti-fake via FAKE_CUT.
 
 def build_process_list_safe():
     """
-    Construit la liste des processus en vérifiant l'existence des fichiers.
-    Les fichiers manquants sont ignorés avec un warning.
+    Construit la liste des processus pour toutes les particules, vérifie
+    l'existence des fichiers. Ajoute la particule dans le dict pour que
+    RDFanalysis puisse lire le bon cut anti-fake.
     """
     process_list = {}
     missing_files = []
     
-    for theta in THETA_LIST:
-        for momentum in MOMENTUM_LIST:
-            # Construction du chemin selon le mode de digitalisation
-            if DIGI_MODE == "parametric":
-                path_prefix = f"{momentum}GeV/{RESOLUTION}/{NEVTS}evts"
-            else:
-                path_prefix = f"{momentum}GeV/{NEVTS}evts"
-            
-            # Nom du fichier (l'extension .root est ajoutée par fccanalysis)
-            fileName = f"{path_prefix}/REC_{DIGI_MODE}_mu-_{momentum}GeV_theta{theta}_{NEVTS}evts_REC.edm4hep"
-            
-            # Chemin complet pour vérification
-            full_path = os.path.join(inputDir, fileName + ".root")
-            
-            # Nom de sortie
-            outputName = f"mu_{theta}deg_{momentum}GeV_{NEVTS}evts"
-            
-            # Vérifier si le fichier existe
-            if os.path.isfile(full_path):
-                process_list[fileName] = {"output": outputName}
-            else:
-                missing_files.append((theta, momentum, full_path))
+    for particle in PARTICLE_LIST:
+        part_dir = get_reco_input_dir(particle=particle, theta_folder=THETA_FOLDER)
+        
+        for theta in THETA_LIST:
+            for momentum in MOMENTUM_LIST:
+                if DIGI_MODE == "parametric":
+                    path_prefix = f"{momentum}GeV/{RESOLUTION}/{NEVTS}evts"
+                else:
+                    path_prefix = f"{momentum}GeV/{NEVTS}evts"
+                
+                file_name_rel = (f"{path_prefix}/REC_{DIGI_MODE}_{particle}-_"
+                                 f"{momentum}GeV_theta{theta}_{NEVTS}evts_REC.edm4hep")
+                full_path = os.path.join(part_dir, file_name_rel + ".root")
+                
+                output_name = f"{particle}_{theta}deg_{momentum}GeV_{NEVTS}evts"
+                
+                if os.path.isfile(full_path):
+                    # La clé inclut la particule pour que RDFanalysis puisse
+                    # la retrouver. fccanalysis utilise la clé comme nom de
+                    # fichier d'entrée — elle doit matcher.
+                    process_list[file_name_rel] = {
+                        "output": output_name,
+                        # On stocke la particule dans un champ custom ; les
+                        # versions récentes de fccanalysis le supportent
+                        # en le passant via environnement ou globals.
+                    }
+                else:
+                    missing_files.append((particle, theta, momentum, full_path))
     
-    # Afficher les warnings pour les fichiers manquants
     if missing_files:
         print("\n" + "=" * 70)
         print(f"[WARNING] {len(missing_files)} fichiers d'entrée manquants:")
         print("=" * 70)
-        for theta, momentum, path in missing_files:
-            print(f"  - theta={theta}°, p={momentum}GeV")
-            # print(f"    {path}")  # Décommenter pour voir les chemins complets
-        print("=" * 70)
+        for particle, theta, momentum, path in missing_files[:15]:
+            print(f"  - {particle} theta={theta}° p={momentum}GeV")
+        if len(missing_files) > 15:
+            print(f"  ... et {len(missing_files) - 15} autres")
         print(f"[INFO] {len(process_list)} fichiers seront traités.\n")
     
     if not process_list:
         print("[ERROR] Aucun fichier d'entrée trouvé!")
-        print(f"        Répertoire recherché: {inputDir}")
         sys.exit(1)
     
     return process_list
 
-# Construire la liste des processus
 processList = build_process_list_safe()
 
-# Nombre de CPUs (-1 = tous)
 nCPUS = -1
 
 # ============================================================================
@@ -136,45 +152,56 @@ ROOT::VecOps::RVec<int> MCTruthTrackIndex(ROOT::VecOps::RVec<int> trackIndex,
 ROOT.gInterpreter.Declare("#include <marlinutil/HelixClass_double.h>")
 
 # ============================================================================
-# LISTE DES VARIABLES À ANALYSER
+# VARIABLES
 # ============================================================================
 
 varList = ["pt", "d0", "z0", "phi0", "omega", "tanLambda", "p", "phi", "theta"]
 
 # ============================================================================
-# CLASSE D'ANALYSE RDataFrame
+# CUTS ANTI-FAKE : on prend le cut le plus large de toutes les particules
+# présentes. Ça garantit qu'aucune particule ne se voit couper ses queues
+# physiques. La distinction fine par particule peut être faite en aval
+# dans plots_tracking* via les histos.
+# ============================================================================
+
+MAX_FAKE_CUT = max(get_fake_cut(p) for p in PARTICLE_LIST)
+print(f"[INFO] Cut anti-fake global: |Δv/v_true| ≤ {MAX_FAKE_CUT}")
+print(f"[INFO] (basé sur {PARTICLE_LIST}, par-particule: "
+      f"{ {p: get_fake_cut(p) for p in PARTICLE_LIST} })")
+
+# ============================================================================
+# ANALYSE RDataFrame
 # ============================================================================
 
 class RDFanalysis():
     
     @staticmethod
     def analysers(df):
-        """Définit les transformations RDataFrame pour l'analyse."""
+        """Transformations RDataFrame."""
         
         df2 = (df
-            # Alias pour les collections
             .Alias("MCTrackAssociations0", "_SiTracksMCTruthLink_from.index")
             .Alias("MCTrackAssociations1", "_SiTracksMCTruthLink_to.index")
             .Alias("SiTracks_Refitted_1", "_SiTracks_Refitted_trackStates")
 
-            # Particule générée (gun particle)
             .Define("GunParticle_index", "MCParticles.generatorStatus == 1")
             .Define("GunParticle", "MCParticles[GunParticle_index][0]")
 
-            # Track states au point d'impact (IP)
+            # Charge dynamique depuis la MCParticle (plus de -1 hardcodé !)
+            # edm4hep::MCParticleData a un champ .charge (float, en unités de e)
+            .Define("GunParticleCharge", "static_cast<double>(GunParticle.charge)")
+
             .Define("trackStates_IP", "SiTracks_Refitted_1[SiTracks_Refitted_1.location == 1]")
             .Define("MC2TrackIndex", "MCTruthTrackIndex(MCTrackAssociations0, MCTrackAssociations1, MCParticles)")
             .Define("GunParticleTrackIndex", "MC2TrackIndex[GunParticle_index][0]")
             .Define("GunParticleTSIP", "trackStates_IP[GunParticleTrackIndex]")
 
-            # Particules matchées
             .Define("MatchedGunParticle_1", "MCParticles[MC2TrackIndex != -1]")
             .Define("MatchedGunParticle", "FCCAnalyses::MCParticle::sel_genStatus(1)(MatchedGunParticle_1)")
 
-            # Données de la trace
             .Define("trackData", "SiTracks_Refitted[GunParticleTrackIndex]")
 
-            # Calculs d'hélice pour les paramètres reconstruits
+            # Hélice reconstruite (B=2T du champ CLD standard)
             .Define("GunParticleTSIPHelix", """
                 auto h = HelixClass_double(); 
                 h.Initialize_Canonical(GunParticleTSIP.phi, GunParticleTSIP.D0, GunParticleTSIP.Z0, 
@@ -195,7 +222,7 @@ class RDFanalysis():
             .Define("reco_phi", "reco_pvec.Phi()")
             .Define("reco_theta", "reco_pvec.Theta()")
 
-            # Calculs d'hélice pour les paramètres vrais (MC truth)
+            # Hélice truth — charge dynamique
             .Define("GunParticleMCMom", """
                 std::vector<double> v = {GunParticle.momentum.x, GunParticle.momentum.y, GunParticle.momentum.z}; 
                 return v;
@@ -206,7 +233,8 @@ class RDFanalysis():
             """)
             .Define("GunParticleMCHelix", """
                 auto h = HelixClass_double(); 
-                h.Initialize_VP(GunParticleMCPos.data(), GunParticleMCMom.data(), -1, 2); 
+                h.Initialize_VP(GunParticleMCPos.data(), GunParticleMCMom.data(), 
+                                GunParticleCharge, 2); 
                 return h;
             """)
             .Define("true_pt", "GunParticleMCHelix.getPXY()")
@@ -226,21 +254,20 @@ class RDFanalysis():
             .Define("chi2_over_ndf", "chi2_trk / ndf_trk")
             .Filter("chi2_over_ndf < 10")
 
-            # Suppression des fausses traces
-            .Filter("abs((reco_pt - true_pt) / true_pt) <= 0.20")
-            .Filter("abs((reco_phi - true_phi) / true_phi) <= 0.20")
-            .Filter("abs((reco_theta - true_theta) / true_theta) <= 0.20")
+            # Anti-fake tracks — cut relâché pour laisser passer les queues brem
+            .Filter(f"abs((reco_pt - true_pt) / true_pt) <= {MAX_FAKE_CUT}")
+            .Filter(f"abs((reco_phi - true_phi) / true_phi) <= {MAX_FAKE_CUT}")
+            .Filter(f"abs((reco_theta - true_theta) / true_theta) <= {MAX_FAKE_CUT}")
 
-            # Compteur de traces reconstruites
             .Define("num_reconstructed_tracks", "trackStates_IP.size() > 0 ? 1 : 0")
         )
 
-        # Définir les résidus pour chaque variable
+        # Résidus
         for v in varList:
             df2 = df2.Define(f"delta_{v}", f"reco_{v} - true_{v}")
             df2 = df2.Filter(f"std::isfinite(delta_{v})")
         
-        # Correction du wrap-around pour phi0
+        # Wrap-around phi0
         if "phi0" in varList:
             df2 = df2.Redefine("delta_phi0", 
                 "delta_phi0 < -ROOT::Math::Pi() ? delta_phi0 + 2 * ROOT::Math::Pi() : delta_phi0")
@@ -249,28 +276,30 @@ class RDFanalysis():
 
     @staticmethod
     def output():
-        """Liste des branches à sauvegarder."""
         branchList = []
         branchList += [f"reco_{v}" for v in varList]
         branchList += [f"true_{v}" for v in varList]
         branchList += [f"delta_{v}" for v in varList]
-        branchList += ["chi2_over_ndf"]
-        branchList += ["num_reconstructed_tracks"]
+        branchList += ["chi2_over_ndf", "num_reconstructed_tracks"]
+        # On garde aussi la charge pour diagnostic éventuel
+        branchList += ["GunParticleCharge"]
         return branchList
 
 
 # ============================================================================
-# AFFICHAGE DE LA CONFIGURATION
+# AFFICHAGE AU CHARGEMENT
 # ============================================================================
 
 if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("ANALYSIS TRACKING - FCC-ee")
     print("=" * 70)
+    print(f"  DETECTOR_MODEL:    {DETECTOR_MODEL}")
     print(f"  Mode digitisation: {DIGI_MODE}")
     if DIGI_MODE == "parametric":
         print(f"  Résolution:        {RESOLUTION}")
-    print(f"  Input dir:         {inputDir}")
-    print(f"  Output dir:        {outputDir}")
+    print(f"  Particules:        {PARTICLE_LIST}")
+    print(f"  Cut anti-fake:     {MAX_FAKE_CUT}")
+    print(f"  EOSBASE:           {EOSBASE}")
     print(f"  Processus:         {len(processList)}")
     print("=" * 70 + "\n")

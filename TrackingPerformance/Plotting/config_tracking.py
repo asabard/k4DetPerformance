@@ -1,12 +1,19 @@
 """
 Configuration centrale pour l'analyse de tracking FCC-ee.
 Ce fichier est importé par tous les scripts de la chaîne d'analyse.
+
+CHANGEMENTS vs version précédente :
+- DETECTOR_MODEL lu via variable d'environnement (comme config.sh)
+- EOSBASE dérivé automatiquement : /eos/.../DigiPerformance/${DETECTOR_MODEL}/
+- PARTICLE_LIST étendu à ["mu", "e", "pi"] par défaut
+- Ajout de SIGMA_EFF_FRACTION et FAKE_CUT (par particule)
 """
 import os
 import ROOT
+import math
 
 # ============================================================================
-# CONFIGURATION GLOBALE
+# CONFIGURATION GLOBALE — synchronisée avec config.sh
 # ============================================================================
 
 # Mode de digitisation: "detailed" ou "parametric"
@@ -15,84 +22,104 @@ DIGI_MODE = os.environ.get("DIGI_MODE", "detailed")
 # Résolution pour le mode parametric
 RESOLUTION = os.environ.get("RESOLUTION", "3um")
 
-# Base EOS
-EOSBASE = "/eos/user/a/asabard/DigiPerformance"
+# Modèle de détecteur (lu depuis l'env, même convention que config.sh)
+DETECTOR_MODEL = os.environ.get("DETECTOR_MODEL", "CLD_o2_v07")
 
-# Modèle de détecteur
-DETECTOR_MODEL = "CLD_o2_v07"
+# Base EOS — inclut maintenant le modèle de détecteur pour séparer les prod
+EOSBASE = f"/eos/user/a/asabard/DigiPerformance/{DETECTOR_MODEL}"
 
 # Nombre d'événements
-NEVTS = "2000"
+NEVTS = os.environ.get("NEVTS", "2000")
 NEVTS_PER_JOB = "2000"
+
+# ============================================================================
+# MODE D'AFFICHAGE DE L'AXE X (p ou pT)
+# ============================================================================
+
+X_AXIS_MODE = os.environ.get("X_AXIS_MODE", "p")
+
+def get_x_value(momentum, theta):
+    """Valeur à mettre en abscisse des plots vs impulsion."""
+    if X_AXIS_MODE == "pt":
+        return float(momentum) * math.sin(math.radians(float(theta)))
+    return float(momentum)
+
+def get_x_label():
+    return "p_{T} [GeV]" if X_AXIS_MODE == "pt" else "p [GeV]"
 
 # ============================================================================
 # LISTES DE PARAMÈTRES CINÉMATIQUES
 # ============================================================================
 
-# Particules disponibles
-PARTICLE_LIST = ["mu"]  # Peut être étendu: ["mu", "e", "pi"]
+# Particules disponibles - défaut étendu aux 3 particules
+# Note : l'ordre compte pour les plots comparatifs
+PARTICLE_LIST = os.environ.get("PARTICLE_LIST", "mu,e,pi").split(",")
 
 # Angles theta disponibles (en degrés)
-# Note: 89° n'est pas inclus par défaut car pb de simulation dans thetanotfixed ca devient 90°
 THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "90"]
-#THETA_LIST = ["10", "20", "30", "40", "50", "60", "70", "80", "89"]
-
 
 # Impulsions disponibles (en GeV)
-#MOMENTUM_LIST = ["1", "3", "5", "10", "20", "30", "60", "100"]
-MOMENTUM_LIST = ["1", "10", "100"]
+MOMENTUM_LIST = ["1", "2", "3", "5", "10", "15", "20", "30", "50", "60", "100", "150"]
 
-# ============================================================================
-# LISTES POUR LES PLOTS SUPERPOSÉS
-# ============================================================================
-
-# Impulsions pour les plots en fonction de theta
+# Listes pour les plots superposés
 STACK_MOMENTUM_LIST = ["1", "10", "100"]
-
-# Angles pour les plots en fonction de l'impulsion
 STACK_THETA_LIST = ["10", "30", "50", "70", "90"]
+
+# ============================================================================
+# CUTS ANTI-FAKE PAR PARTICULE
+# ============================================================================
+# Raison : pour les e⁻, le bremsstrahlung peut faire perdre > 20 % d'énergie
+# de façon physique. Le cut historique à 0.20 jetait ces événements et
+# biaisait la résolution. On relâche à 0.50 pour garder les queues brem,
+# tout en rejetant les vraies fake tracks (perte complète de suivi).
+
+FAKE_CUT = {
+    "mu":  0.20,  # muons : distribution propre, cut strict OK
+    "e":   0.50,  # électrons : queue brem, cut large nécessaire
+    "pi":  0.30,  # pions : MS + hadronic interactions à basse p
+    "mu-": 0.20,  # alias avec la charge
+    "e-":  0.50,
+    "pi-": 0.30,
+}
+
+def get_fake_cut(particle):
+    """Retourne le cut anti-fake à appliquer pour une particule donnée."""
+    return FAKE_CUT.get(particle, 0.50)
+
+# ============================================================================
+# SIGMA EFFECTIF (métrique model-free)
+# ============================================================================
+
+# Fraction cible pour σ_eff (0.6827 = équivalent ±1σ gaussien)
+SIGMA_EFF_FRACTION = 0.6827
+
+# Seuil au-delà duquel on considère que les queues sont importantes
+# (ratio sigma_eff / sigma_gauss > ce seuil => queue significative)
+TAIL_WARNING_THRESHOLD = 1.30
 
 # ============================================================================
 # CHEMINS D'ENTRÉE/SORTIE
 # ============================================================================
 
 def get_reco_input_dir(particle="mu", theta_folder=""):
-    """
-    Chemin vers les fichiers de reconstruction (input pour analysis_tracking).
-    
-    Args:
-        particle: particule ("mu", "e", "pi")
-        theta_folder: sous-dossier optionnel (ex: "ThetaNotFixed")
-    
-    Returns:
-        Chemin complet vers le répertoire d'entrée
-    """
+    """Chemin vers les fichiers de reconstruction."""
     base_path = os.path.join(EOSBASE, f"REC_{DIGI_MODE}", f"{particle}-", theta_folder)
     return base_path.rstrip('/')
 
 
 def get_analysis_output_dir(particle="mu"):
-    """
-    Chemin de sortie pour les fichiers d'analyse (ROOT trees avec résidus).
-    C'est aussi l'input pour plots_tracking.py.
-    """
+    """Chemin de sortie pour les fichiers d'analyse (résidus)."""
     return f"{EOSBASE}/ANALYSIS/{DIGI_MODE}/{particle}/"
 
 
 def get_plots_output_dir(particle="mu"):
-    """
-    Chemin de sortie pour les plots finaux.
-    """
-    return f"{EOSBASE}/ANALYSIS/{DIGI_MODE}/{particle}/plots/"
+    """Chemin de sortie pour les plots finaux."""
+    suffix = "_pt" if X_AXIS_MODE == "pt" else ""
+    return f"{EOSBASE}/ANALYSIS/{DIGI_MODE}/{particle}/plots{suffix}/"
 
 
 def get_reco_file_path(particle, theta, momentum, theta_folder=""):
-    """
-    Construit le chemin complet vers un fichier de reconstruction.
-    
-    Returns:
-        Tuple (chemin_relatif, nom_sortie) pour processList
-    """
+    """Construit le chemin complet vers un fichier de reconstruction."""
     if DIGI_MODE == "parametric":
         path_prefix = f"{momentum}GeV/{RESOLUTION}/{NEVTS}evts"
     else:
@@ -105,38 +132,27 @@ def get_reco_file_path(particle, theta, momentum, theta_folder=""):
 
 
 def get_analysis_file_path(particle, theta, momentum):
-    """
-    Chemin vers un fichier d'analyse (output de analysis_tracking, input de plots_tracking).
-    """
+    """Chemin vers un fichier d'analyse."""
     output_dir = get_analysis_output_dir(particle)
     file_name = f"{particle}_{theta}deg_{momentum}GeV_{NEVTS}evts.root"
     return os.path.join(output_dir, file_name)
 
 
 # ============================================================================
-# FONCTIONS DE VÉRIFICATION DES FICHIERS
+# VÉRIFICATION DES FICHIERS
 # ============================================================================
 
 def file_exists(file_path):
-    """Vérifie si un fichier existe."""
     return os.path.isfile(file_path)
 
 
 def check_root_file(file_path, tree_name="events"):
-    """
-    Vérifie si un fichier ROOT existe et contient le TTree attendu.
-    
-    Returns:
-        True si le fichier est valide, False sinon
-    """
     if not file_exists(file_path):
         return False
-    
     try:
         f = ROOT.TFile.Open(file_path)
         if not f or f.IsZombie():
             return False
-        
         tree = f.Get(tree_name)
         is_valid = tree is not None and tree.GetEntries() > 0
         f.Close()
@@ -147,19 +163,6 @@ def check_root_file(file_path, tree_name="events"):
 
 def get_available_processes(particle_list=None, theta_list=None, momentum_list=None, 
                            input_dir=None, verbose=True):
-    """
-    Retourne uniquement les processus dont les fichiers d'entrée existent.
-    
-    Args:
-        particle_list: liste de particules (défaut: PARTICLE_LIST)
-        theta_list: liste d'angles theta (défaut: THETA_LIST)
-        momentum_list: liste d'impulsions (défaut: MOMENTUM_LIST)
-        input_dir: répertoire d'entrée (défaut: analysis output dir)
-        verbose: afficher les fichiers manquants
-    
-    Returns:
-        dict: processList filtré avec seulement les fichiers existants
-    """
     if particle_list is None:
         particle_list = PARTICLE_LIST
     if theta_list is None:
@@ -188,7 +191,7 @@ def get_available_processes(particle_list=None, theta_list=None, momentum_list=N
     
     if verbose and missing:
         print(f"[WARNING] {len(missing)} fichiers manquants sur {len(missing) + len(available)}:")
-        for m in missing[:10]:  # Afficher les 10 premiers
+        for m in missing[:10]:
             print(f"  - {m}")
         if len(missing) > 10:
             print(f"  ... et {len(missing) - 10} autres")
@@ -197,30 +200,17 @@ def get_available_processes(particle_list=None, theta_list=None, momentum_list=N
 
 
 def filter_existing_files(file_list, verbose=True):
-    """
-    Filtre une liste de chemins de fichiers pour ne garder que ceux qui existent.
-    
-    Args:
-        file_list: liste de chemins de fichiers
-        verbose: afficher les fichiers manquants
-    
-    Returns:
-        Liste filtrée des fichiers existants
-    """
     existing = []
     missing = []
-    
     for f in file_list:
         if file_exists(f):
             existing.append(f)
         else:
             missing.append(f)
-    
     if verbose and missing:
         print(f"[WARNING] {len(missing)} fichiers manquants:")
         for m in missing:
             print(f"  - {m}")
-    
     return existing
 
 
@@ -228,16 +218,10 @@ def filter_existing_files(file_list, verbose=True):
 # VARIABLES ET TITRES POUR LES PLOTS
 # ============================================================================
 
-# Variables résiduelles (paramètres d'hélice)
 RESIDUAL_LIST = ["d0", "z0", "phi0", "omega", "tanLambda", "phi", "theta"]
-
-# Variables spéciales (normalisées par p² ou pT²)
 SPECIAL_LIST = ["pt", "p"]
-
-# Liste complète des variables
 VAR_LIST = [f"delta_{v}" for v in RESIDUAL_LIST] + [f"sdelta_{v}" for v in SPECIAL_LIST]
 
-# Titres des axes Y
 AXIS_TITLES = {
     "delta_d0": "#sigma(#Deltad_{0}) [#mum]",
     "delta_z0": "#sigma(#Deltaz_{0}) [#mum]",
@@ -250,42 +234,72 @@ AXIS_TITLES = {
     "sdelta_p": "#sigma(#Deltap/p_{true}^{2}) [GeV^{-1}]",
 }
 
-# Facteurs de conversion d'unités
 UNIT_SCALE = {
-    "delta_d0": 1e3,      # mm -> µm
-    "delta_z0": 1e3,      # mm -> µm
-    "delta_phi0": 1.0,
-    "delta_omega": 1.0,
-    "delta_tanLambda": 1.0,
-    "delta_phi": 1e3,     # rad -> mrad
-    "delta_theta": 1e3,   # rad -> mrad
-    "sdelta_pt": 1.0,
-    "sdelta_p": 1.0,
+    "delta_d0": 1e3, "delta_z0": 1e3,
+    "delta_phi0": 1.0, "delta_omega": 1.0, "delta_tanLambda": 1.0,
+    "delta_phi": 1e3, "delta_theta": 1e3,
+    "sdelta_pt": 1.0, "sdelta_p": 1.0,
 }
+
+# Variables pour lesquelles une Crystal Ball est préférable à une gaussienne
+# (queues non-gaussiennes dues au brem / interactions hadroniques)
+CB_VARIABLES = ["delta_omega", "sdelta_pt", "sdelta_p"]
+
+def should_use_crystalball(particle, variable):
+    """
+    Décide si on doit utiliser une Crystal Ball au lieu d'une gaussienne.
+    
+    - Électrons : oui pour les variables d'impulsion (brem)
+    - Pions : oui aussi pour les variables d'impulsion (hadronic interactions)
+    - Muons : jamais (distribution bien gaussienne)
+    """
+    if variable not in CB_VARIABLES:
+        return False
+    # Normalisation du nom de particule (peut être "e", "e-", "electron"...)
+    p = particle.lower().rstrip("-+")
+    if p in ("e", "electron"):
+        return True
+    if p in ("pi", "pion"):
+        return True
+    return False
+
 
 # ============================================================================
 # STYLES DE PLOTS
 # ============================================================================
 
-# Styles de marqueurs
 MARKER_STYLES = [ROOT.kOpenTriangleUp, ROOT.kOpenSquare, ROOT.kOpenDiamond, 
                  ROOT.kOpenCross, ROOT.kOpenCircle]
 MARKER_STYLES_FULL = [ROOT.kFullTriangleUp, ROOT.kFullSquare, ROOT.kFullDiamond, 
                       ROOT.kFullCross, ROOT.kFullCircle]
-
-# Couleurs
 COLORS = [ROOT.kBlue, ROOT.kRed, ROOT.kMagenta, ROOT.kGreen, ROOT.kBlack]
 
-# Dimensions du canvas
+# Couleurs dédiées pour la comparaison par particule
+PARTICLE_COLORS = {
+    "mu": ROOT.kBlue,
+    "e":  ROOT.kRed,
+    "pi": ROOT.kBlack,
+}
+
+PARTICLE_MARKERS_GAUSS = {
+    "mu": ROOT.kFullCircle,
+    "e":  ROOT.kFullSquare,
+    "pi": ROOT.kFullTriangleUp,
+}
+
+PARTICLE_MARKERS_EFF = {
+    "mu": ROOT.kOpenCircle,
+    "e":  ROOT.kOpenSquare,
+    "pi": ROOT.kOpenTriangleUp,
+}
+
 CANVAS_WIDTH = 900
 CANVAS_HEIGHT = 800
-
-# Marges
 PLOT_MARGIN_LEFT = 0.15
 PLOT_MARGIN_BOTTOM = 0.15
 
 # ============================================================================
-# RANGES DES AXES Y POUR LES DIFFÉRENTS TYPES DE PLOTS
+# RANGES DES AXES Y
 # ============================================================================
 
 Y_AXIS_RANGE_THETA = {
@@ -312,38 +326,30 @@ Y_AXIS_RANGE_MOMENTUM = {
     "Canvas_sdelta_p": (1e-5, 1),
 }
 
-
 # ============================================================================
 # FONCTIONS UTILITAIRES
 # ============================================================================
 
 def pname(particle, theta, momentum):
-    """Génère le nom standardisé d'un processus."""
+    """Nom standardisé d'un processus."""
     return f"{particle}_{theta}deg_{momentum}GeV_{NEVTS}evts"
 
 
 def ensure_dir(directory):
-    """Crée un répertoire s'il n'existe pas."""
     if not os.path.exists(directory):
         os.makedirs(directory)
         print(f"[INFO] Répertoire créé: {directory}")
 
 
 def setup_root_style():
-    """Configure le style ROOT pour les plots."""
     ROOT.gStyle.SetOptFit(1111)
     ROOT.gROOT.SetBatch(True)
 
 
 def get_particle_symbol(particle):
-    """Retourne le symbole LaTeX d'une particule."""
     symbols = {"mu": r"\mu", "pi": r"\pi", "e": r"e"}
     return symbols.get(particle, particle)
 
-
-# ============================================================================
-# LISTE DES CANVAS STANDARDS
-# ============================================================================
 
 CANVAS_NAMES = [
     "Canvas_delta_d0", "Canvas_delta_z0", "Canvas_delta_phi0", "Canvas_delta_omega",
@@ -353,22 +359,23 @@ CANVAS_NAMES = [
 
 
 # ============================================================================
-# AFFICHAGE DE LA CONFIGURATION AU CHARGEMENT
+# AFFICHAGE AU CHARGEMENT
 # ============================================================================
 
 if __name__ == "__main__":
     print("=" * 60)
     print("Configuration Tracking FCC-ee")
     print("=" * 60)
+    print(f"  DETECTOR_MODEL: {DETECTOR_MODEL}")
     print(f"  DIGI_MODE:      {DIGI_MODE}")
     print(f"  RESOLUTION:     {RESOLUTION}")
-    print(f"  DETECTOR:       {DETECTOR_MODEL}")
     print(f"  NEVTS:          {NEVTS}")
-    print(f"  Particles:      {PARTICLE_LIST}")
-    print(f"  Theta list:     {THETA_LIST}")
-    print(f"  Momentum list:  {MOMENTUM_LIST}")
+    print(f"  PARTICLE_LIST:  {PARTICLE_LIST}")
+    print(f"  THETA_LIST:     {THETA_LIST}")
+    print(f"  MOMENTUM_LIST:  {MOMENTUM_LIST}")
+    print(f"  FAKE_CUT:       {FAKE_CUT}")
     print("-" * 60)
-    print(f"  RECO input:     {get_reco_input_dir()}")
+    print(f"  EOSBASE:        {EOSBASE}")
     print(f"  Analysis out:   {get_analysis_output_dir()}")
     print(f"  Plots out:      {get_plots_output_dir()}")
     print("=" * 60)
