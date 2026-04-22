@@ -3,11 +3,11 @@
 Soumission de la reconstruction sur HTCondor.
 
 Supporte deux modes (via config.RECO_MODE) :
-  - "detailed"   : --detailedDigitization (digitizer complet avec ton code)
-  - "parametric" : smearing gaussien sur u,v avec RES_UM
+  - "detailed"   : ajoute --detailedDigitization
+  - "parametric" : N'ajoute PAS --detailedDigitization (comportement par défaut
+                   de CLDReconstruction.py = smearing gaussien)
 
-Les SIM sont lues depuis le submission dir SIM_SOURCE_TAG (défaut : même TAG)
-— permet de partager les SIM entre deux configs reco (detailed + parametric).
+Reproduit step2a_reco_detailed.sh et step2b_reco_parametric.sh locaux.
 
 Usage :
     python condorJobs_reco.py --config config_mu_detailed
@@ -50,6 +50,7 @@ def build_reco_dir(config, part: str, energy: int) -> Path:
     else:
         sub = Path(part) / f"{energy}GeV"
     if config.RECO_MODE == "parametric":
+        # Le RES_UM est UNIQUEMENT un tag de dossier, pas un flag
         return (config.data_dir / "REC_parametric" / sub
                 / config.RES_UM / f"{config.N_EVTS}evts")
     return config.data_dir / "REC_detailed" / sub / f"{config.N_EVTS}evts"
@@ -84,7 +85,7 @@ def main() -> None:
         directory_jobs.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
         print(f"[ERROR] '{directory_jobs}' existe déjà.")
-        print("        Supprime-le avant de resoumettre :")
+        print(f"        Supprime-le avant de resoumettre :")
         print(f"        rm -rf {directory_jobs}")
         sys.exit(1)
     (directory_jobs / "log").mkdir(exist_ok=True)
@@ -98,21 +99,14 @@ def main() -> None:
         config.detector_model_list,
     )
 
-    # Flags k4run selon le mode
+    # ----- Flags selon le mode reco -----
+    # DETAILED = avec --detailedDigitization (calqué sur step2a_reco_detailed.sh)
+    # PARAMETRIC = SANS --detailedDigitization (calqué sur step2b_reco_parametric.sh)
+    # Le RES_UM n'est PAS un flag CLI — c'est un tag de dossier uniquement.
     if config.RECO_MODE == "detailed":
         mode_flags = ["--detailedDigitization"]
     else:
-        # Parametric — RES_UM est un string du type "3um" -> on extrait le nb
-        res_um_str = config.RES_UM.replace("um", "").strip()
-        res_value = float(res_um_str) * 0.001    # um -> mm
-        mode_flags = [
-            "--VXDTrackerHitDigitiser.ResolutionU", str(res_value),
-            "--VXDTrackerHitDigitiser.ResolutionV", str(res_value),
-            "--InnerPlanarDigiProcessor.ResolutionU", str(res_value),
-            "--InnerPlanarDigiProcessor.ResolutionV", str(res_value),
-            "--OuterPlanarDigiProcessor.ResolutionU", str(res_value),
-            "--OuterPlanarDigiProcessor.ResolutionV", str(res_value),
-        ]
+        mode_flags = []   # parametric = comportement par défaut de CLDReconstruction.py
 
     for theta, energy, part, dect in combos:
         sim_dir  = build_sim_dir(config, part, energy)
@@ -133,6 +127,7 @@ def main() -> None:
             main_out = f"{basename}_REC.edm4hep.root"
             out_path = reco_dir / main_out
 
+            # Skip si déjà produit et complet
             if out_path.exists():
                 try:
                     f_ = ROOT.TFile(fspath(out_path), "READ")
