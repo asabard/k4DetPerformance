@@ -1,0 +1,6 @@
+executable = debug.sh
+output = debug.out
+error  = debug.err
+log    = debug.log
++JobFlavour = "espresso"
+queue

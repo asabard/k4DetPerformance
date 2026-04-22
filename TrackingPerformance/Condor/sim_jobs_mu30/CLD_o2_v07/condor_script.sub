@@ -1,7 +1,0 @@
-executable = $(filename)
-arguments  = $(ClusterId) $(ProcId)
-output     = log/output.$(ClusterId).$(ProcId).out
-error      = log/error.$(ClusterId).$(ProcId).err
-log        = log/log.$(ClusterId).log
-+JobFlavour = "longlunch"
-queue filename matching files sim_*.sh

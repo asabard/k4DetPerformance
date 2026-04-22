@@ -4,10 +4,13 @@ SuperimposedCanvas avec ratios pour FCC-ee.
 CHANGEMENTS vs version précédente :
 - Chemins basés sur EOSBASE (qui inclut DETECTOR_MODEL)
 - Titre inclut DETECTOR_MODEL
+- Boucle sur PARTICLE_LIST : un PDF/ROOT par particule (mu, e, pi)
+- legend_header paramétrable (plus de "Single #mu^{-}" hardcodé)
 
 Usage:
     python SuperimposedCanvas_ratio.py
     DETECTOR_MODEL=CLD_o2_v05 python SuperimposedCanvas_ratio.py
+    PARTICLE_LIST=mu python SuperimposedCanvas_ratio.py
 """
 import ROOT
 import os
@@ -17,12 +20,17 @@ ROOT.gROOT.SetBatch(True)
 
 try:
     from config_tracking import (
-        DETECTOR_MODEL, EOSBASE, X_AXIS_MODE, get_x_label,
+        DETECTOR_MODEL, EOSBASE, PARTICLE_LIST,
+        X_AXIS_MODE, get_x_label,
         Y_AXIS_RANGE_THETA, Y_AXIS_RANGE_MOMENTUM,
     )
 except ImportError:
     print("[ERROR] config_tracking.py introuvable")
     sys.exit(1)
+
+
+# Symboles ROOT TLatex pour les particules
+ROOT_SYMBOLS = {"mu": "#mu^{-}", "e": "e^{-}", "pi": "#pi^{-}"}
 
 
 _unique_counter = 0
@@ -200,7 +208,8 @@ def add_entries_to_legend(legend, labels, styles, colors, additional_text, keep_
 
 
 def process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b,
-                                file_names, canvas_style, legend_txt, top_left_txt):
+                                file_names, canvas_style, legend_txt, top_left_txt,
+                                legend_header="Single #mu^{-}"):
     
     existing = []
     for fn in file_names:
@@ -382,7 +391,7 @@ def process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_
             leg = ROOT.TLegend(0.52, 0.60, 0.94, 0.91)
             leg.SetTextFont(42); leg.SetTextSize(0.038)
             leg.SetFillStyle(0); leg.SetBorderSize(0); leg.SetMargin(0.20)
-            leg.SetHeader("Single #mu^{-}")
+            leg.SetHeader(legend_header)
             
             sa, ca = marker_styles_func(id_a, 'a', canvas_style)
             sb, cb = marker_styles_func(id_b, 'b', canvas_style)
@@ -434,11 +443,11 @@ def process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_
             comb_leg = ROOT.TLegend(0.58, 0.48, 0.96, 0.91)
             comb_leg.SetTextFont(42); comb_leg.SetTextSize(0.026)
             comb_leg.SetFillStyle(0); comb_leg.SetBorderSize(0); comb_leg.SetMargin(0.18)
-            comb_leg.SetHeader("Single #mu^{-}")
+            comb_leg.SetHeader(legend_header)
             
             for leg in legs:
                 for entry in leg.GetListOfPrimitives():
-                    if isinstance(entry, ROOT.TLegendEntry) and entry.GetLabel() != "Single #mu^{-}":
+                    if isinstance(entry, ROOT.TLegendEntry) and entry.GetLabel() != legend_header:
                         obj = entry.GetObject()
                         if obj:
                             comb_leg.AddEntry(obj, entry.GetLabel(), entry.GetOption())
@@ -513,16 +522,13 @@ def process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_
 if __name__ == "__main__":
     print("\n" + "=" * 70)
     print(f"SuperimposedCanvas Ratio — FCC-ee {DETECTOR_MODEL}")
+    print(f"Particules : {PARTICLE_LIST}")
     print("=" * 70 + "\n")
     
     plots_subdir = "plots_pt" if X_AXIS_MODE == "pt" else "plots"
     suffix_out = "_pt" if X_AXIS_MODE == "pt" else ""
     
-    folder_a = f"{EOSBASE}/ANALYSIS/detailed/mu/{plots_subdir}/"
-    folder_b = f"{EOSBASE}/ANALYSIS/parametric/mu/{plots_subdir}/"
-    
     legend_txt = [", detailed digi", ", param. (res 3 #mum)"]
-    top_left_txt = f"FCC-ee {DETECTOR_MODEL}"
     
     canvas_names = [
         "Canvas_delta_d0", "Canvas_delta_z0", "Canvas_delta_phi0", "Canvas_delta_omega",
@@ -530,23 +536,38 @@ if __name__ == "__main__":
         "Canvas_sdelta_pt", "Canvas_sdelta_p"
     ]
     
-    print("[INFO] Ratio vs theta...")
-    output_file_path = f'./ratio_theta{suffix_out}_{DETECTOR_MODEL}.root'
-    file_names = ['t_dist_1.root', 't_dist_10.root', 't_dist_100.root']
-    process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b,
-                               file_names, 'theta', legend_txt, top_left_txt)
-    
-    print("\n[INFO] Ratio vs momentum...")
-    output_file_path = f'./ratio_momentum{suffix_out}_{DETECTOR_MODEL}.root'
-    file_names = ['p_dist_10.root', 'p_dist_30.root', 'p_dist_50.root',
-                  'p_dist_70.root', 'p_dist_90.root']
-    process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b,
-                               file_names, 'momentum', legend_txt, top_left_txt)
-    
-    print("\n[INFO] Ratio vs theta à pT constant...")
-    output_file_path = f'./ratio_theta_ptconst{suffix_out}_{DETECTOR_MODEL}.root'
-    file_names = ['t_dist_ptconst_1.root', 't_dist_ptconst_10.root', 't_dist_ptconst_100.root']
-    process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b,
-                               file_names, 'theta', legend_txt, top_left_txt)
+    for particle in PARTICLE_LIST:
+        p_sym = ROOT_SYMBOLS.get(particle, particle)
+        
+        print("\n" + "#" * 70)
+        print(f"### Particule : {particle}  ({p_sym})")
+        print("#" * 70)
+        
+        folder_a = f"{EOSBASE}/ANALYSIS/detailed/{particle}/{plots_subdir}/"
+        folder_b = f"{EOSBASE}/ANALYSIS/parametric/{particle}/{plots_subdir}/"
+        top_left_txt = f"FCC-ee {DETECTOR_MODEL}"
+        legend_header = f"Single {p_sym}"
+        
+        print(f"\n[INFO] [{particle}] Ratio vs theta...")
+        output_file_path = f'./ratio_theta{suffix_out}_{DETECTOR_MODEL}_{particle}.root'
+        file_names = ['t_dist_1.root', 't_dist_10.root', 't_dist_100.root']
+        process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b,
+                                   file_names, 'theta', legend_txt, top_left_txt,
+                                   legend_header=legend_header)
+        
+        print(f"\n[INFO] [{particle}] Ratio vs momentum...")
+        output_file_path = f'./ratio_momentum{suffix_out}_{DETECTOR_MODEL}_{particle}.root'
+        file_names = ['p_dist_10.root', 'p_dist_30.root', 'p_dist_50.root',
+                      'p_dist_70.root', 'p_dist_90.root']
+        process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b,
+                                   file_names, 'momentum', legend_txt, top_left_txt,
+                                   legend_header=legend_header)
+        
+        print(f"\n[INFO] [{particle}] Ratio vs theta à pT constant...")
+        output_file_path = f'./ratio_theta_ptconst{suffix_out}_{DETECTOR_MODEL}_{particle}.root'
+        file_names = ['t_dist_ptconst_1.root', 't_dist_ptconst_10.root', 't_dist_ptconst_100.root']
+        process_and_compare_graphs(output_file_path, canvas_names, folder_a, folder_b,
+                                   file_names, 'theta', legend_txt, top_left_txt,
+                                   legend_header=legend_header)
     
     print("\n[INFO] Terminé !")

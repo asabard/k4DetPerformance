@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 """
-Soumission de la reconstruction sur HTCondor — version alignée sur
-ton step2a_reco_detailed.sh local.
+Soumission de la reconstruction sur HTCondor.
 
-Reproduit précisément ce que fait ton script bash :
-  1. Workdir dédié au job (scratch condor de préférence).
-  2. PYTHONPATH inclut CLDCONFIG (pour `py_utils`).
-  3. Symlinks vers les sous-modules Gaudi (Tracking, Overlay, ...) + fichiers.
-  4. k4run avec --detailedDigitization --trackingOnly --compactFile --num-events -1
-     (ou la variante parametric).
-  5. xrdcp de tous les fichiers *_REC.edm4hep.root vers EOS.
+Supporte deux modes (via config.RECO_MODE) :
+  - "detailed"   : --detailedDigitization (digitizer complet avec ton code)
+  - "parametric" : smearing gaussien sur u,v avec RES_UM
+
+Les SIM sont lues depuis le submission dir SIM_SOURCE_TAG (défaut : même TAG)
+— permet de partager les SIM entre deux configs reco (detailed + parametric).
 
 Usage :
-    python condorJobs_reco.py --config config_mu30
+    python condorJobs_reco.py --config config_mu_detailed
+    python condorJobs_reco.py --config config_mu_parametric
 """
 
 import itertools
@@ -25,8 +24,6 @@ import ROOT
 from utils import load_config, parse_args
 
 
-# Sous-modules et fichiers que CLDReconstruction.py attend dans son cwd,
-# identique à ce que ton step2a_reco_detailed.sh symlinke en local.
 CLDCONFIG_LINKS = [
     "Tracking",
     "Overlay",
@@ -101,14 +98,21 @@ def main() -> None:
         config.detector_model_list,
     )
 
-    # Flags k4run selon le mode, calqués sur step2a_reco_detailed.sh
+    # Flags k4run selon le mode
     if config.RECO_MODE == "detailed":
         mode_flags = ["--detailedDigitization"]
     else:
-        # Si tu as une variante parametric, ajoute les flags ici, par ex. :
-        # mode_flags = ["--VXDTrackerHitDigitiser.resU", config.PARAM_RES_UV,
-        #               "--VXDTrackerHitDigitiser.resV", config.PARAM_RES_UV]
-        mode_flags = []
+        # Parametric — RES_UM est un string du type "3um" -> on extrait le nb
+        res_um_str = config.RES_UM.replace("um", "").strip()
+        res_value = float(res_um_str) * 0.001    # um -> mm
+        mode_flags = [
+            "--VXDTrackerHitDigitiser.ResolutionU", str(res_value),
+            "--VXDTrackerHitDigitiser.ResolutionV", str(res_value),
+            "--InnerPlanarDigiProcessor.ResolutionU", str(res_value),
+            "--InnerPlanarDigiProcessor.ResolutionV", str(res_value),
+            "--OuterPlanarDigiProcessor.ResolutionU", str(res_value),
+            "--OuterPlanarDigiProcessor.ResolutionV", str(res_value),
+        ]
 
     for theta, energy, part, dect in combos:
         sim_dir  = build_sim_dir(config, part, energy)
@@ -124,13 +128,11 @@ def main() -> None:
         compact = Path("$k4geo_DIR") / config.det_mod_paths[dect]
 
         for sim_path in sim_files:
-            # basename : SIM_..._job0 -> REC_detailed_..._job0
             job_tag  = sim_path.stem.replace("_edm4hep", "")
             basename = f"REC_{config.RECO_MODE}_{job_tag.removeprefix('SIM_')}"
-            main_out = f"{basename}_REC.edm4hep.root"   # produit par k4run
+            main_out = f"{basename}_REC.edm4hep.root"
             out_path = reco_dir / main_out
 
-            # Skip si output déjà valide
             if out_path.exists():
                 try:
                     f_ = ROOT.TFile(fspath(out_path), "READ")
@@ -143,7 +145,6 @@ def main() -> None:
                     pass
             NEED_SCRIPTS = True
 
-            # Commandes de symlinks reproduites depuis step2a_reco_detailed.sh
             link_cmds = "\n".join(
                 f'ln -sfn "{cldconfig_dir}/{x}" .' for x in CLDCONFIG_LINKS
             )
@@ -164,27 +165,23 @@ def main() -> None:
 set -e
 source {config.setup}
 
-# --- Workdir dédié au job -----------------------------------
-# Scratch condor si dispo (auto-nettoyé en fin de job),
-# sinon /tmp avec PID pour l'isolation.
 WORKDIR="${{_CONDOR_SCRATCH_DIR:-/tmp/${{USER}}_reco_$$}}"
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"
 
-# --- Symlinks attendus par CLDReconstruction.py --------------
+# Symlinks attendus par CLDReconstruction.py
 {link_cmds}
 
-# --- Reco ----------------------------------------------------
+# Reco
 {k4run_cmd}
 
-# --- Upload des outputs sur EOS ------------------------------
+# Upload
 shopt -s nullglob
 for f in {basename}*.root; do
     echo "[upload] $f"
     xrdcp -f "$f" "root://eosuser.cern.ch/{reco_dir}/"
 done
 
-# Nettoyage explicite (condor scratch est auto-nettoyé mais au cas où)
 rm -f {basename}*.root
 """
             job_k = job_tag.split("_job")[-1]

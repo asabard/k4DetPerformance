@@ -1,0 +1,68 @@
+=== DEBUG JOB ===
+hostname: b9p19p9983.cern.ch
+user: asabard
+scratch: /pool/condor/dir_2199361
+pwd: /pool/condor/dir_2199361
+
+--- tokens ---
+
+Tokens held by the Cache Manager:
+
+User's (AFS ID 183068) rxkad tokens for cern.ch [Expires Apr 23 12:33]
+   --End of list--
+
+--- klist ---
+Ticket cache: FILE:/pool/condor/dir_2199361/asabard.cc
+Default principal: asabard@CERN.CH
+
+Valid starting       Expires              Service principal
+04/22/2026 11:34:00  04/23/2026 12:33:55  krbtgt/CERN.CH@CERN.CH
+	renew until 04/29/2026 11:26:54
+04/22/2026 11:35:57  04/23/2026 12:33:55  afs/cern.ch@CERN.CH
+	renew until 04/29/2026 11:26:54
+
+--- ls AFS public racine ---
+total 6
+drwxr-xr-x.  3 asabard zh 2048 Apr 21 16:25 .
+drwxr-xr-x. 20 asabard zh 2048 Apr 22 11:45 ..
+drwxr-xr-x.  7 asabard zh 2048 Apr 21 16:45 FCC_PHD_Condor
+
+--- ls FCC_PHD_Condor ---
+total 16
+drwxr-xr-x.  7 asabard zh 2048 Apr 21 16:45 .
+drwxr-xr-x.  3 asabard zh 2048 Apr 21 16:25 ..
+drwxr-xr-x.  8 asabard zh 2048 Apr 21 16:28 CLDConfig
+drwxr-xr-x. 10 asabard zh 2048 Apr 21 16:30 FCCDetectors
+drwxr-xr-x.  5 asabard zh 2048 Apr 21 16:27 k4DetPerformance
+drwxr-xr-x. 24 asabard zh 2048 Apr 21 16:40 k4geo
+drwxr-xr-x. 14 asabard zh 2048 Apr 21 16:33 k4RecTracker
+-rwxr-xr-x.  1 asabard zh  278 Apr 21 16:45 setup_k4geo.sh
+-rw-r--r--.  1 asabard zh  669 Apr 21 16:45 setup_k4Rec.sh
+
+--- ls k4geo/install/bin ---
+total 1156
+drwxr-xr-x. 2 asabard zh   2048 Apr 21 16:48 .
+drwxr-xr-x. 5 asabard zh   2048 Apr 21 16:48 ..
+-rwxr-xr-x. 1 asabard zh 484080 Apr 21 16:48 BeamCalZtest
+-rwxr-xr-x. 1 asabard zh 693240 Apr 21 16:48 TestSensThickness
+-rw-r--r--. 1 asabard zh   1710 Apr 21 16:44 thisk4geo.sh
+
+--- cat thisk4geo.sh (test lecture) ---
+#################################################################################
+#
+#  Environment script for DD4hep examples - initializes DD4hep (and ROOT)
+#  for package: k4geo
+# 
+#  @author F.Gaede, DESY, 2013
+#  @author M.Frank, CERN, 2015
+#
+#################################################################################
+# Default of DD4hep is the primary installation directory
+
+--- test CVMFS ---
+releases
+setup.sh
+share
+
+--- fin ---
+=== END DEBUG ===

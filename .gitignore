@@ -1,1 +1,9 @@
 **/__pycache__/
+
+# Ignorer tous les fichiers avec l'extension .pdf et .root t
+*.pdf
+*.root
+
+# Ignorer le dossier sim_jobs et tout son contenu
+**/sim_jobs/
+**/debug_jobs/

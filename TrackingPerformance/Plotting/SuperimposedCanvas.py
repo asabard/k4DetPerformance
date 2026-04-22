@@ -5,10 +5,12 @@ Superpose des plots de différentes configurations (digi, détecteurs, etc.)
 CHANGEMENTS vs version précédente :
 - Chemins basés sur EOSBASE (qui inclut DETECTOR_MODEL)
 - Titre du plot inclut DETECTOR_MODEL
+- Boucle sur PARTICLE_LIST : un PDF/ROOT par particule (mu, e, pi)
 
 Usage:
     python SuperimposedCanvas.py                      # CLD_o2_v07 par défaut
     DETECTOR_MODEL=CLD_o2_v05 python SuperimposedCanvas.py
+    PARTICLE_LIST=mu python SuperimposedCanvas.py     # uniquement muons
 """
 import ROOT
 import os
@@ -25,7 +27,7 @@ def unique_name(base):
 
 try:
     from config_tracking import (
-        DIGI_MODE, DETECTOR_MODEL, EOSBASE,
+        DIGI_MODE, DETECTOR_MODEL, EOSBASE, PARTICLE_LIST,
         get_plots_output_dir, file_exists,
         CANVAS_NAMES, Y_AXIS_RANGE_THETA, Y_AXIS_RANGE_MOMENTUM, AXIS_TITLES,
         X_AXIS_MODE, get_x_label,
@@ -34,6 +36,10 @@ try:
 except ImportError:
     print("[ERROR] config_tracking.py introuvable")
     sys.exit(1)
+
+
+# Symboles ROOT TLatex pour les particules (config_tracking utilise du LaTeX brut)
+ROOT_SYMBOLS = {"mu": "#mu^{-}", "e": "e^{-}", "pi": "#pi^{-}"}
 
 
 # ============================================================================
@@ -278,36 +284,46 @@ def set_styles_and_colors_theta(idx):
 if __name__ == "__main__":
     print("\n" + "=" * 70)
     print(f"SuperimposedCanvas — FCC-ee {DETECTOR_MODEL}")
+    print(f"Particules : {PARTICLE_LIST}")
     print("=" * 70 + "\n")
     
     plots_subdir = "plots_pt" if X_AXIS_MODE == "pt" else "plots"
     suffix_out = "_pt" if X_AXIS_MODE == "pt" else ""
-    
-    # Les chemins utilisent EOSBASE (qui contient DETECTOR_MODEL)
-    base_detailed = f"{EOSBASE}/ANALYSIS/detailed/mu/{plots_subdir}"
-    base_param = f"{EOSBASE}/ANALYSIS/parametric/mu/{plots_subdir}"
-    
-    # --- Plots vs momentum ---
-    print("[INFO] Plots combinés vs momentum...")
-    input_files = [
-        f"{base_detailed}/p_dist.root",
-        f"{base_param}/p_dist.root",
-    ]
-    output_file = f"combined_canvas_momentum{suffix_out}_{DETECTOR_MODEL}"
     legend_text = [", detailed digi", ", parametric digi"]
-    combine_canvases(input_files, output_file,
-                     set_styles_and_colors_momentum, legend_text,
-                     log_x=True, log_y=True)
     
-    # --- Plots vs theta ---
-    print("\n[INFO] Plots combinés vs theta...")
-    input_files = [
-        f"{base_detailed}/t_dist.root",
-        f"{base_param}/t_dist.root",
-    ]
-    output_file = f"combined_canvas_theta{suffix_out}_{DETECTOR_MODEL}"
-    combine_canvases(input_files, output_file,
-                     set_styles_and_colors_theta, legend_text,
-                     log_x=False, log_y=True)
+    for particle in PARTICLE_LIST:
+        p_sym = ROOT_SYMBOLS.get(particle, particle)
+        
+        print("\n" + "#" * 70)
+        print(f"### Particule : {particle}  ({p_sym})")
+        print("#" * 70)
+        
+        base_detailed = f"{EOSBASE}/ANALYSIS/detailed/{particle}/{plots_subdir}"
+        base_param = f"{EOSBASE}/ANALYSIS/parametric/{particle}/{plots_subdir}"
+        top_left_txt = f"FCC-ee {DETECTOR_MODEL}   Single {p_sym}"
+        
+        # --- Plots vs momentum ---
+        print(f"\n[INFO] [{particle}] Plots combinés vs momentum...")
+        input_files = [
+            f"{base_detailed}/p_dist.root",
+            f"{base_param}/p_dist.root",
+        ]
+        output_file = f"combined_canvas_momentum{suffix_out}_{DETECTOR_MODEL}_{particle}"
+        combine_canvases(input_files, output_file,
+                         set_styles_and_colors_momentum, legend_text,
+                         log_x=True, log_y=True,
+                         top_left_txt=top_left_txt)
+        
+        # --- Plots vs theta ---
+        print(f"\n[INFO] [{particle}] Plots combinés vs theta...")
+        input_files = [
+            f"{base_detailed}/t_dist.root",
+            f"{base_param}/t_dist.root",
+        ]
+        output_file = f"combined_canvas_theta{suffix_out}_{DETECTOR_MODEL}_{particle}"
+        combine_canvases(input_files, output_file,
+                         set_styles_and_colors_theta, legend_text,
+                         log_x=False, log_y=True,
+                         top_left_txt=top_left_txt)
     
     print("\n[INFO] Terminé !")
